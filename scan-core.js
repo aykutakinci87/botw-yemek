@@ -56,12 +56,12 @@ function fit1(P,p,r,lo,hi,minN){
   return {s:best,ph};
 }
 /* global periodic fit: square pitch p, border ratio r, phases for x and y */
-function findGrid(img,G,roi){
-  const {w,h}=img;roi=roi||{x0:0,y0:0,x1:w,y1:h};
+function findGrid(img,G,roi,o){
+  o=o||{};const {w,h}=img;roi=roi||{x0:0,y0:0,x1:w,y1:h};
   const Px=new Float32Array(w),Py=new Float32Array(h);
   for(let y=roi.y0;y<roi.y1;y++)for(let x=roi.x0;x<roi.x1;x++){const i=y*w+x;Px[x]+=G.gx[i];Py[y]+=G.gy[i]}
   const Hx=hp(Px,12),Hy=hp(Py,12);
-  const rw=roi.x1-roi.x0,rh=roi.y1-roi.y0,pmin=Math.max(20,rw/9),pmax=Math.min(rw/4.2,rh/3.1);
+  const rw=roi.x1-roi.x0,rh=roi.y1-roi.y0,pmin=o.pmin||Math.max(20,rw/9),pmax=o.pmax||Math.min(rw/4.2,rh/3.1);
   let best=null;
   for(let p=pmin;p<=pmax;p+=0.5)for(const r of [0.83,0.855,0.88,0.905]){
     const fx=fit1(Hx,p,r,roi.x0,roi.x1,4),fy=fit1(Hy,p,r,roi.y0,roi.y1,3);

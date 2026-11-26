@@ -206,6 +206,17 @@ body{padding-top:env(safe-area-inset-top,0px)}
 .rv.off{opacity:.62}
 .rx.add{background:var(--fire);border-color:var(--fire);color:#1b0c00;font-weight:700}
 #revrep:disabled,#revadd:disabled{opacity:.45;cursor:default}
+.tcard{display:grid;grid-template-columns:56px minmax(0,1fr) auto;gap:12px;align-items:center;background:#1d3a2a;border-radius:14px;padding:10px 12px}
+.tcard[hidden]{display:none}
+.tct{display:flex;flex-direction:column;gap:4px}
+.tct b{font-size:18px}
+.tct span{font-size:14px;color:#cfe0d4}
+.tcard .cn button{background:#0f1f16;color:#fff;border-color:#ffffff40}
+.tcard .cn button[aria-pressed=true]{background:var(--fire);color:#1b0c00;border-color:var(--fire)}
+.tca{display:flex;flex-direction:column;gap:6px}
+.tca .go{margin:0;min-width:96px;font-size:16px;min-height:48px}
+.sk{border:1px solid #ffffff44;background:transparent;color:#fff;border-radius:999px;min-height:40px;font-weight:600;cursor:pointer}
+.tcard .cn button{min-width:52px;height:48px;font-size:17px}
 </style>
 </head>
 <body>
@@ -256,7 +267,7 @@ body{padding-top:env(safe-area-inset-top,0px)}
     </div>
 
     <div id="p-env" hidden>
-      <div class="envhead"><p id="envn"></p><div class="eacts"><button class="go" id="scanbtn">Kamerayla tara</button><button class="btn2" id="envclr">Temizle</button></div></div>
+      <div class="envhead"><p id="envn"></p><div class="eacts"><button class="go" id="scanbtn">Kamerayla tek tek tara</button><button class="btn2" id="scanbtn2">Sayfa sayfa</button><button class="btn2" id="envclr">Temizle</button></div></div>
       <h3 class="sub">Bunlarla yapabileceğin en iyiler</h3>
       <div class="cards" id="gcards"></div>
       <p class="miss" id="miss"></p>
@@ -300,6 +311,7 @@ body{padding-top:env(safe-area-inset-top,0px)}
     <div class="camwrap"><video id="cam" playsinline muted autoplay></video><canvas id="ov"></canvas>
       <div class="stop"><p id="scanmsg"></p><button class="sx" id="scanx" aria-label="Kapat">×</button></div></div>
     <div class="sbot">
+      <div class="tcard" id="tcard" hidden><div id="tci"></div><div class="tct"><b id="tcn"></b><span id="tcs"></span><div class="cn" id="tcc"></div></div><div class="tca"><button class="go" id="tcadd">Ekle</button><button class="sk" id="tcskip">Geç</button></div></div>
       <div class="srow"><span id="scancount"></span><button class="go" id="scandone" disabled>Bitti</button></div>
       <div class="slist" id="scanlist"></div>
     </div>
@@ -884,6 +896,100 @@ $('etab').innerHTML='<thead><tr><th>Etki</th><th>Ne yapar</th><th class="n">Lv2 
 
 const io=new IntersectionObserver(en=>{en.forEach(x=>$('bar').classList.toggle('show',!x.isIntersecting&&x.boundingClientRect.top<0))});
 io.observe($('out'));
+/* Tek tek tarama: imlecin üstündeki malzemenin adını TV'den okur, kartla onaya sunar */
+let SMODE='grid',OCRW=null,OCRP=null,TEK={lastK:-1,streak:0,cur:null,added:{},skip:new Set()};
+const nc=document.createElement('canvas'),nctx=nc.getContext('2d',{willReadFrequently:true}),oc=document.createElement('canvas'),octx=oc.getContext('2d',{willReadFrequently:true});
+const cc=document.createElement('canvas'),cctx=cc.getContext('2d',{willReadFrequently:true});
+const NORM=s=>s.toLowerCase().replace(/[^a-z' -]/g,'').replace(/\s+/g,' ').trim();
+const ALLN=SCAN_NAMES.map((n,k)=>({k,n:NORM(n)}));
+/* names that are the tail of a longer name (Hearty Truffle / Big Hearty Truffle) need two agreeing reads */
+const AMBIG=new Set(ALLN.filter(a=>ALLN.some(b=>b.k!==a.k&&b.n.endsWith(' '+a.n))).map(a=>a.k));
+function lev(a,b){const m=a.length,n=b.length;let p=new Array(n+1),q=new Array(n+1);for(let j=0;j<=n;j++)p[j]=j;
+  for(let i=1;i<=m;i++){q[0]=i;for(let j=1;j<=n;j++)q[j]=Math.min(p[j]+1,q[j-1]+1,p[j-1]+(a[i-1]===b[j-1]?0:1));[p,q]=[q,p]}return p[n]}
+function matchName(t){const q=NORM(t||'');if(q.length<3)return null;let b=null;for(const o of ALLN){const e=lev(q.slice(0,o.n.length+3),o.n)/o.n.length;if(!b||e<b.e)b={k:o.k,e}}return b}
+const absU=p=>new URL(p,location.href).href;
+function loadScript(src){return new Promise((res,rej)=>{const s=document.createElement('script');s.src=src;s.onload=res;s.onerror=rej;document.head.appendChild(s)})}
+function getOCR(){
+  if(OCRP)return OCRP;
+  OCRP=(async()=>{if(!window.Tesseract)await loadScript('ocr/tesseract.min.js');
+    const w=await Tesseract.createWorker('eng',1,{workerPath:absU('ocr/worker.min.js'),corePath:absU('ocr/'),langPath:absU('ocr/'),gzip:true,workerBlobURL:false});
+    await w.setParameters({tessedit_pageseg_mode:'7',tessedit_char_whitelist:"ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz'- "});
+    OCRW=w;return w})();
+  OCRP.catch(()=>{OCRP=null});
+  return OCRP;
+}
+function guideTek(vw,vh){return {x:vw*0.17,y:vh*0.27,w:vw*0.38,h:vh*0.56}}
+/* white, unsaturated name text -> black on white line image for the OCR */
+function nameCanvas(src,box){
+  const sc=128/box.p,W=Math.max(8,Math.round(box.w*sc)),H=Math.max(8,Math.round(box.h*sc));
+  nc.width=W;nc.height=H;nctx.drawImage(src,box.x,box.y,box.w,box.h,0,0,W,H);
+  const d=nctx.getImageData(0,0,W,H).data,L=Math.round(0.3*W);
+  let mx=0;for(let y=0;y<H;y+=2)for(let x=0;x<L;x+=2){const i=(y*W+x)*4,m=Math.min(d[i],d[i+1],d[i+2]);if(m>mx)mx=m}
+  const thr=Math.max(150,0.78*mx),B=new Uint8Array(W*H);
+  for(let k=0;k<W*H;k++){const i=k*4,mn=Math.min(d[i],d[i+1],d[i+2]),ma=Math.max(d[i],d[i+1],d[i+2]);B[k]=mn>thr&&ma-mn<45?1:0}
+  const th=Math.max(3,0.015*W),bands=[];let cur=null;
+  for(let y=0;y<H;y++){let c=0;for(let x=0;x<L;x++)c+=B[y*W+x];if(c>=th){if(!cur)cur=[y,y];else cur[1]=y}else if(cur){bands.push(cur);cur=null}}
+  if(cur)bands.push(cur);
+  const bd=bands.filter(b=>b[1]-b[0]>=15&&b[0]>0)[0];if(!bd)return null;
+  const y0=bd[0],y1=bd[1],bh=y1-y0+1,col=x=>{let c=0;for(let y=y0;y<=y1;y++)c+=B[y*W+x];return c};
+  let st=-1;for(let x=0;x<L;x++)if(col(x)){st=x;break}if(st<0)return null;
+  let en=st,gap=0;for(let x=st;x<W;x++){if(col(x)){en=x;gap=0}else if(++gap>0.9*bh)break}
+  oc.width=en-st+1+2*bh;oc.height=3*bh;const od=octx.createImageData(oc.width,oc.height);od.data.fill(255);
+  for(let y=y0;y<=y1;y++)for(let x=st;x<=en;x++)if(B[y*W+x]){const o=((y-y0+bh)*oc.width+(x-st+bh))*4;od.data[o]=od.data[o+1]=od.data[o+2]=0}
+  octx.putImageData(od,0,0);return oc;
+}
+/* count of a cell, read at the source's own resolution */
+function countAt(src,cell,k){
+  const c=cell.c*k,x=cell.x*k-0.1*c,y=cell.y*k-0.1*c,s=Math.round(1.2*c);cc.width=s;cc.height=s;cctx.drawImage(src,x,y,s,s,0,0,s,s);
+  const hi={w:s,h:s,d:cctx.getImageData(0,0,s,s).data};return SC.readCount(hi,{x:0.1*c,y:0.1*c,c},1,DIGITS);
+}
+let tekCtx=null;const TDBG=new URLSearchParams(location.search).get('dbg');const dbg=(...a)=>{if(TDBG)console.log('DBG',typeof tfi!=='undefined'?tfi:'',...a)};
+async function processTek(){
+  const v=SRC||$('cam'),vw=srcW(v),vh=srcH(v);if(!vw)return;
+  if(vw<vh){scanLast=[];tekCtx=null;drawOverlay({rx:0,ry:0,k:1,g:{x:0,y:0,w:0,h:0}});setMsg('Telefonu yatay tut, TV ekranının tamamı görünsün.');return}
+  const g=guideTek(vw,vh),W=960,H=Math.round(vh*W/vw),k=vw/W;
+  work.width=W;work.height=H;wctx.drawImage(v,0,0,vw,vh,0,0,W,H);
+  const img={w:W,h:H,d:wctx.getImageData(0,0,W,H).data},m=0.08*g.w;
+  const roi={x0:Math.max(0,Math.round((g.x-m)/k)),y0:Math.max(0,Math.round((g.y-m)/k)),x1:Math.min(W,Math.round((g.x+g.w+m)/k)),y1:Math.min(H,Math.round((g.y+g.h+m)/k))};
+  const map={rx:0,ry:0,k,g};
+  const G=SC.grayGrad(img),pe=g.w/k/5,grid=SC.findGrid(img,G,roi,TEK.p?{pmin:0.92*TEK.p,pmax:1.08*TEK.p}:{pmin:0.6*pe,pmax:1.45*pe}),C=grid?SC.cells(img,G,grid,roi):[];
+  if(C.length<12){if(++TEK.miss>12)TEK.p=null;dbg('nogrid',C.length,grid&&grid.p);scanLast=[];tekCtx=null;drawOverlay(map);setMsg('Izgarayı kesikli kutuya oturt. Sağdaki ad yazısı da görünsün.');return}
+  const p=grid.p,gx1=Math.max(...C.map(c=>c.x))+C[0].c,gy0=Math.min(...C.map(c=>c.y));
+  const box={x:(gx1+0.3*p)*k,y:(gy0+2.2*p)*k,w:5.7*p*k,h:0.85*p*k,p:p*k};
+  box.w=Math.min(box.w,vw-box.x);box.h=Math.min(box.h,vh-box.y);
+  map.name=box;
+  if(box.w<2.6*p*k||box.h<0.6*p*k){dbg('nameout');scanLast=[];drawOverlay(map);setMsg('Sağdaki ad yazısı kadrajın dışında kaldı, biraz uzaklaş.');return}
+  scanLast=[];drawOverlay(map);
+  const line=nameCanvas(v,box);if(!line){if(++TEK.miss>12)TEK.p=null;dbg('noline p',p.toFixed(1),'gx1',gx1.toFixed(0),'gy0',gy0.toFixed(0));TEK.streak=0;setMsg('İmleci bir malzemenin üstüne getir.');return}
+  let w;try{w=await getOCR()}catch(e){setMsg('Yazı okuyucu yüklenemedi. İnternete bağlanıp tekrar dene.');return}
+  const r=await w.recognize(line),mt=matchName((r.data.text||'').split('\n')[0]);dbg('ocr',JSON.stringify((r.data.text||'').trim()),mt&&SCAN_NAMES[mt.k],mt&&mt.e.toFixed(2),'p',p.toFixed(1),'C',C.length);
+  /* a weak read neither counts nor breaks the run; a very clean read is enough on its own */
+  if(!mt||mt.e>0.34){if(++TEK.miss>12)TEK.p=null;setMsg('Ad okunuyor…');return}
+  TEK.p=p;TEK.miss=0;
+  dbg('streak',SCAN_NAMES[mt.k],TEK.lastK===mt.k?TEK.streak+1:1,'cur',TEK.cur&&SCAN_NAMES[TEK.cur.k]);
+  if(mt.k===TEK.lastK)TEK.streak++;else{TEK.lastK=mt.k;TEK.streak=1}
+  if(TEK.streak<2&&(mt.e>0.12||AMBIG.has(mt.k))){setMsg('Ad okunuyor…');return}
+  if(TEK.cur&&TEK.cur.k===mt.k)return;
+  /* the matching cell gives the count */
+  TEK.cur={k:mt.k,c:TEK.added[mt.k]||0,cell:null};
+  showCard();
+}
+function showCard(){
+  const t=TEK.cur,card=$('tcard');if(!t){card.hidden=true;return}
+  card.hidden=false;const food=isFood(t.k),had=TEK.added[t.k];
+  $('tci').innerHTML=icp(t.k,56);$('tcn').textContent=SCAN_NAMES[t.k];
+  $('tcs').textContent=!food?'Pişirme malzemesi değil, eklenmez.':had?'Zaten ekli. Sayı değiştiyse yenisine dokun.':'Oyunda kaç tane var? Dokununca eklenir.';
+  $('tcc').innerHTML=food?[1,2,3,4,5].map(v=>'<button data-c="'+v+'" aria-pressed="'+(t.c===v)+'">'+(v===5?'5+':v)+'</button>').join(''):'';
+  $('tcadd').hidden=true;
+  setMsg(food?'Sayıya dokun, sonra oyunda bir sonraki malzemeye geç.':'Sonraki malzemeye geç.');
+}
+function tekAdd(){const t=TEK.cur;if(!t||!t.c||!isFood(t.k))return;TEK.added[t.k]=t.c;
+  scanObs[t.k]=scanObs[t.k]||{k:t.k,counts:{},sure:{},alts:{},first:0};scanObs[t.k].first=Date.now();scanObs[t.k].sure={[t.c]:9};ACC.add(t.k);
+  drawScanList();$('tcard').hidden=true;setMsg(SCAN_NAMES[t.k]+' eklendi. Oyunda bir sonraki malzemeye geç.')}
+$('tcc').addEventListener('click',ev=>{const b=ev.target.closest('button');if(!b||!TEK.cur)return;TEK.cur.c=+b.dataset.c;tekAdd()});
+$('tcadd').addEventListener('click',tekAdd);
+$('tcskip').addEventListener('click',()=>{if(TEK.cur)TEK.skip.add(TEK.cur.k);$('tcard').hidden=true;setMsg('Geçildi. Sonraki malzemeye geç.')});
+
 /* Kamerayla tarama: canlı kameradan envanter sayfalarını okuyup çantaya ekler.
    Her kutu için ayrı oy tutulur; bir malzeme ancak aynı kutuda art arda ve açık farkla kazanırsa eklenir.
    Görüntü kayarken oy sayılmaz. Emin olunmayanlar eklenmez, kontrol ekranında sorulur. */
@@ -906,30 +1012,33 @@ function loadRefs(){
 }
 const setMsg=t=>{$('scanmsg').textContent=t};
 function guide(vw,vh){let gw,gh;if(vw<vh){gw=vw*0.94;gh=gw/1.25}else{gh=vh*0.8;gw=Math.min(vw*0.92,gh*1.3)}return {x:(vw-gw)/2,y:(vh-gh)*(vw<vh?0.42:0.5),w:gw,h:gh}}
-const revLog=()=>console.log('STAT frames '+nP+' nogrid '+nG+' moving '+nM+' voted '+scanFrames+' pages '+nE)||console.log('REV '+REV.filter(r=>r.on).length+' on / '+REV.length+' :: '+REV.map(r=>(r.on?'':'-')+SCAN_NAMES[r.k]+' '+(r.nocount?'?':r.c)).join(', '));
-async function openScan(keep){
+const revLog=()=>console.log('TEKUNK '+[...(TEK.unk||[])].map(k=>SCAN_NAMES[k]).join(', '))||console.log('STAT frames '+nP+' nogrid '+nG+' moving '+nM+' voted '+scanFrames+' pages '+nE)||console.log('REV '+REV.filter(r=>r.on).length+' on / '+REV.length+' :: '+REV.map(r=>(r.on?'':'-')+SCAN_NAMES[r.k]+' '+(r.nocount?'?':r.c)).join(', '));
+async function openScan(keep,mode){
+  if(mode)SMODE=mode;if(keep!==true)TEK={lastK:-1,streak:0,cur:null,added:{},skip:new Set(),p:null,miss:0};$('tcard').hidden=true;
+  if(SMODE==='tek')getOCR().catch(()=>{});
   $('scan').hidden=false;$('scanrev').hidden=true;$('scanlive').hidden=false;document.body.style.overflow='hidden';
   if(keep!==true){scanObs={};slotH={};ACC=new Set();MAYBE=new Set();scanFrames=0}
   prevG=null;prevA=null;slotH={};scanLast=[];drawScanList();setMsg('Kamera açılıyor…');
   try{
     await loadRefs();
     const v=$('cam');SRC=v;
-    if(TESTF){SRC=new Image();scanStream={getTracks:()=>[]};
-      const next=()=>new Promise(r=>{tfi++;if(tfi>TESTF){openReview();revLog();r(false);return}SRC.onload=()=>r(true);SRC.src='fr/'+String(tfi).padStart(3,'0')+'.jpg'});
-      const step=async()=>{if(!(await next()))return;processFrame();setTimeout(step,0)};step();return}
+    if(TESTF){SRC=new Image();scanStream={getTracks:()=>[]};const TD=QS.get('dir')||'fr';
+      const next=()=>new Promise(r=>{tfi++;if(tfi>TESTF){openReview();revLog();r(false);return}SRC.onload=()=>r(true);SRC.src=TD+'/'+String(tfi).padStart(3,'0')+'.jpg'});
+      const step=async()=>{if(!(await next()))return;if(SMODE==='tek'){await processTek();if(TEK.cur&&!$('tcard').hidden&&isFood(TEK.cur.k)&&!TEK.added[TEK.cur.k]){TEK.cur.c=5;tekAdd()}}else processFrame();setTimeout(step,0)};step();return}
     if(TESTV){v.src=TESTV;v.muted=true;scanStream={getTracks:()=>[]};v.onended=()=>{openReview();revLog()};await v.play()}
     else{scanStream=await navigator.mediaDevices.getUserMedia({video:{facingMode:{ideal:'environment'},width:{ideal:1920},height:{ideal:1080}},audio:false});v.srcObject=scanStream;await v.play()}
-    setMsg('Malzemeler sayfasını çerçeveye sığdır. Her sayfada kutular yeşile dönene kadar sabit tut.');
+    setMsg(SMODE==='tek'?'Telefonu yatay tut. Izgarayı kesikli kutuya oturt, imleci malzemelerin üstünde gezdir.':'Malzemeler sayfasını çerçeveye sığdır. Her sayfada kutular yeşile dönene kadar sabit tut.');
     loop();
   }catch(e){setMsg(location.protocol!=='https:'||!navigator.mediaDevices?'Kamera bu sayfada açılmıyor. Telefondaki uygulama sürümünü kullan.':'Kamera açılamadı. Ayarlar > Uygulamalar > Safari > Kamera iznini kontrol et.')}
 }
 function stopCam(){clearTimeout(scanTimer);scanTimer=null;if(scanStream){scanStream.getTracks().forEach(t=>t.stop());scanStream=null}}
 function closeScan(){stopCam();$('scan').hidden=true;document.body.style.overflow=''}
-function loop(){
+async function loop(){
   if(!scanStream)return;
   const t0=performance.now();
-  try{processFrame()}catch(e){setMsg('Tarama hatası: '+e.message)}
-  scanTimer=setTimeout(loop,Math.max(60,220-(performance.now()-t0)));
+  try{if(SMODE==='tek')await processTek();else processFrame()}catch(e){setMsg('Tarama hatası: '+e.message)}
+  if(!scanStream)return;
+  scanTimer=setTimeout(loop,Math.max(40,(SMODE==='tek'?150:220)-(performance.now()-t0)));
 }
 function decayAll(f){for(const s in slotH){const H=slotH[s];for(const k in H)H[k]*=f}}
 function leader(H){let k=null,v=0,t=0;for(const q in H){t+=H[q];if(q!=='u'&&q!=='e'&&H[q]>v){v=H[q];k=+q}}return {k,v,t}}
@@ -983,7 +1092,8 @@ function drawOverlay(map){
   if(cv.width!==Math.round(r.width*dpr)||cv.height!==Math.round(r.height*dpr)){cv.width=Math.round(r.width*dpr);cv.height=Math.round(r.height*dpr)}
   const x=cv.getContext('2d'),v=SRC||$('cam'),vw=srcW(v),vh=srcH(v);x.clearRect(0,0,cv.width,cv.height);if(!vw)return;
   const sc=Math.max(cv.width/vw,cv.height/vh),ox=(cv.width-vw*sc)/2,oy=(cv.height-vh*sc)/2,P=(a,b)=>[ox+a*sc,oy+b*sc];
-  const g=map.g,[gx,gy]=P(g.x,g.y);x.setLineDash([10*dpr,8*dpr]);x.lineWidth=2*dpr;x.strokeStyle='#ffffffb0';x.strokeRect(gx,gy,g.w*sc,g.h*sc);x.setLineDash([]);
+  const g=map.g,[gx,gy]=P(g.x,g.y);x.setLineDash([10*dpr,8*dpr]);x.lineWidth=2*dpr;x.strokeStyle='#ffffffb0';if(g.w)x.strokeRect(gx,gy,g.w*sc,g.h*sc);
+  if(map.name){const [nx,ny]=P(map.name.x,map.name.y);x.strokeStyle='#ff7a1ad0';x.strokeRect(nx,ny,map.name.w*sc,map.name.h*sc)}x.setLineDash([]);
   scanLast.forEach(o=>{if(o.st==='empty')return;const [a,b]=P(map.rx+o.c.x*map.k,map.ry+o.c.y*map.k),z=o.c.c*map.k*sc;
     x.lineWidth=(o.st==='ok'?4:2.5)*dpr;x.strokeStyle=o.st==='ok'?'#3ddc6b':'#ffd23f';x.strokeRect(a,b,z,z)});
 }
@@ -1021,10 +1131,12 @@ function applyScan(replace){
   REV.forEach(r=>{if(!r.on)return;const x=BY[SCAN_NAMES[r.k]];if(x)inv[x.i]=Math.min(5,r.c)});
   invEx=false;saveInv();drawEnvHead();drawEnvGrid();plan();closeScan();tab('env');
 }
-$('scanbtn').addEventListener('click',()=>openScan(false));
+$('scanbtn').addEventListener('click',()=>openScan(false,'tek'));
+$('scanbtn2').addEventListener('click',()=>openScan(false,'grid'));
 $('scanx').addEventListener('click',closeScan);
 $('scandone').addEventListener('click',openReview);
 $('revback').addEventListener('click',()=>openScan(true));
+if(QS.get('mode')==='tek')SMODE='tek';
 $('revrep').addEventListener('click',()=>applyScan(true));
 $('revadd').addEventListener('click',()=>applyScan(false));
 $('revcancel').addEventListener('click',closeScan);

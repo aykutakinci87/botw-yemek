@@ -1,0 +1,1 @@
+Bu klasördeki yazı tanıma dosyaları tesseract.js 5.1.1 (Apache-2.0), tesseract.js-core 5.1.1 ve Tesseract İngilizce LSTM modelinden (eng, 4.0.0_best_int, Apache-2.0) alınmıştır.
