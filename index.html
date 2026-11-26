@@ -1,0 +1,1010 @@
+<!doctype html>
+<html lang="tr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="color-scheme" content="light dark">
+<meta name="theme-color" content="#163626">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="BotW Yemek">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="apple-touch-icon" href="icon-180.png">
+<link rel="icon" href="icon-192.png">
+<title>BotW Yemek Hesaplayıcı</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;700&family=Barlow:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+/* VOICE everyday hobby helper, opened on a phone mid-game
+   IDEA a camp cooking pot: drop up to five things in, read what comes out; the bag beside it says what you can cook
+   PICTURE the live result in a cast-iron panel: ingredient icons, the player's own heart containers filling, level pips, duration
+   COLOUR white ground, deep iron green panel, heart red, hearty gold, campfire orange accent; every effect keeps one colour
+   TYPE Barlow Condensed 700 + Barlow
+   LAYOUT laptop: title left with heart/stamina settings right; sticky pot panel left 5/12, tabs right; phone: title, settings, pot, tabs, bottom bar */
+:root{color-scheme:light dark;--bg:light-dark(#ffffff,#0d140f);--ink:light-dark(#13201a,#e8efe9);--mut:light-dark(#4f6056,#9db0a3);--line:light-dark(#d6dfd7,#2a3e31);--tile:light-dark(#f2f6f1,#152019);--tileh:light-dark(#e6eee5,#1c2b21);--iron:light-dark(#163626,#142c1f);--iron2:light-dark(#21493a,#1d3a2a);--ironink:#f2f6ef;--ironmut:#aac4b3;--fire:#ff7a1a;--heart:#ee3047;--gold:#f7bb0a;--empty:#2e5140}
+:root[data-theme=light]{color-scheme:light}:root[data-theme=dark]{color-scheme:dark}
+*{box-sizing:border-box;min-width:0}
+body{background:var(--bg);color:var(--ink);font:16px/1.5 Barlow,system-ui,sans-serif;margin:0;overflow-x:clip}
+button{font-family:inherit}
+.wrap{max-width:1240px;margin:0 auto;padding-left:max(5vw,16px,env(safe-area-inset-left,0px));padding-right:max(5vw,16px,env(safe-area-inset-right,0px))}
+header.wrap{padding-block:28px 18px;display:flex;flex-wrap:wrap;align-items:flex-end;justify-content:space-between;gap:14px 32px}
+h1{font:700 clamp(34px,5vw,48px)/1.05 "Barlow Condensed",Barlow,sans-serif;letter-spacing:-.01em;margin:0}
+.lede{margin:6px 0 0;color:var(--mut);max-width:62ch}
+.me{display:flex;flex-wrap:wrap;gap:8px}
+.mi{display:flex;align-items:center;gap:8px;font-weight:600;background:var(--tile);border-radius:12px;padding:4px 4px 4px 12px}
+.mi select{width:auto;min-width:118px}
+.main{display:grid;gap:24px;padding-bottom:48px}
+@media(min-width:760px){.main{grid-template-columns:minmax(0,5fr) minmax(0,7fr);align-items:start}.pot{position:sticky;top:12px;max-height:calc(100svh - 24px);overflow:auto}}
+.ic{--s:44px;display:inline-block;width:var(--s);height:var(--s);flex:none;background:url(tarama.webp) no-repeat;background-size:calc(14*var(--s)) calc(11*var(--s));background-position:calc(var(--x)*-1*var(--s)) calc(var(--y)*-1*var(--s))}
+.pot{background:var(--iron);color:var(--ironink);border-radius:18px;padding:20px}
+.ptop{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+.dots{display:flex;gap:5px}
+.dots i{width:13px;height:13px;border-radius:50%;border:2px solid var(--ironmut)}
+.dots i.on{background:var(--fire);border-color:var(--fire)}
+.plbl{font-weight:600}
+.act{margin-left:auto;display:flex;gap:6px}
+.ghost{font-weight:600;font-size:14px;color:var(--ironink);background:transparent;border:1px solid #ffffff44;border-radius:999px;padding:8px 14px;min-height:40px;cursor:pointer}
+.ghost:hover{background:#ffffff18}
+.ghost:disabled{opacity:.4;cursor:default}
+.chips{display:flex;flex-wrap:wrap;gap:8px;margin:14px 0 2px;min-height:48px}
+.chip{display:inline-flex;align-items:center;gap:8px;background:var(--iron2);color:var(--ironink);border:0;border-bottom:3px solid var(--c);border-radius:10px;padding:5px 10px 5px 6px;font-size:15px;font-weight:500;cursor:pointer;min-height:48px;text-align:left}
+.chip .ic{--s:36px}
+.chip b{color:var(--fire)}
+.chip .x{opacity:.55;font-size:19px;line-height:1}
+.chip:hover .x{opacity:1}
+.hint{color:var(--ironmut);font-size:15px;padding:10px 0;margin:0}
+.dish{font:700 clamp(30px,3.6vw,40px)/1.05 "Barlow Condensed",Barlow,sans-serif;margin:18px 0 4px;overflow-wrap:anywhere}
+.kind{color:var(--ironmut);margin:0 0 14px;font-size:15px}
+.hearts{display:flex;flex-wrap:wrap;gap:3px;max-width:300px}
+.hearts svg{width:27px;height:26px;display:block}
+.hprow{display:flex;align-items:baseline;gap:4px 10px;margin-top:10px;flex-wrap:wrap}
+.big{font:700 46px/1 "Barlow Condensed",Barlow,sans-serif}
+.hprow span:last-child{color:var(--ironmut)}
+.eff{margin-top:18px;padding-top:16px;border-top:1px solid #ffffff24;display:grid;grid-template-columns:minmax(0,1fr) auto;gap:4px 16px;align-items:center}
+.epill{display:flex;gap:7px;align-items:center;font-weight:700;font-size:18px}
+.epill i{width:13px;height:13px;border-radius:3px;background:var(--c);flex:none}
+.pips{display:flex;gap:4px;margin-top:4px;align-items:center}
+.pips i{width:28px;height:9px;border-radius:2px;background:#ffffff28}
+.pips i.on{background:var(--c)}
+.pips span{margin-left:6px;font-weight:600;font-size:15px}
+.edesc{color:var(--ironmut);font-size:15px}
+.dur{grid-row:1/span 3;grid-column:2;text-align:right}
+.dur small{display:block;color:var(--ironmut);font-size:13px}
+.rings{display:flex;flex-wrap:wrap;gap:4px;margin-top:4px}
+.warn{background:#ff7a1a26;border:1px solid #ff7a1a80;border-radius:10px;padding:10px 12px;margin-top:14px;font-size:15px}
+.trim{background:#ffffff12;border-radius:12px;padding:12px;margin-top:14px;display:grid;gap:8px;font-size:15px}
+.trim b{color:var(--fire)}
+.trim .icons .w b{background:var(--ironink);color:var(--iron)}
+.crit{margin-top:14px;font-size:15px;color:var(--ironmut)}
+.crit b{color:var(--ironink)}
+.sum{margin-top:12px;font-size:15px}
+.sum summary{cursor:pointer;font-weight:600;min-height:32px}
+.sum ol{margin:6px 0 0;padding-left:20px;color:#d6e4da}
+.tabs{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:4px;background:var(--tile);border-radius:12px;padding:4px;margin-bottom:14px}
+.tabs button{font-weight:600;font-size:15px;border:0;background:transparent;color:var(--mut);padding:8px 4px;border-radius:9px;cursor:pointer;min-height:44px;line-height:1.15}
+.tabs button[aria-selected=true]{background:var(--bg);color:var(--ink);box-shadow:0 1px 3px #0003}
+.filters{display:grid;grid-template-columns:minmax(0,1fr) auto auto;gap:8px}
+@media(max-width:560px){.filters{grid-template-columns:minmax(0,1fr) minmax(0,1fr)}.filters input{grid-column:1/-1}}
+input[type=search],select{font:16px Barlow,system-ui,sans-serif;color:var(--ink);background:var(--bg);border:1px solid var(--line);border-radius:10px;padding:9px 12px;min-height:44px;width:100%}
+.cats{display:flex;flex-wrap:wrap;gap:6px;margin:10px 0 14px}
+.cats button{font-weight:500;font-size:14px;border:1px solid var(--line);background:var(--bg);color:var(--ink);border-radius:999px;padding:7px 12px;cursor:pointer;min-height:38px}
+.cats button[aria-pressed=true]{background:var(--ink);color:var(--bg);border-color:var(--ink)}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:8px}
+.tile{position:relative;text-align:left;background:var(--tile);border:2px solid transparent;border-radius:12px;padding:8px 10px;cursor:pointer;color:var(--ink);display:grid;grid-template-columns:44px minmax(0,1fr);gap:10px;align-items:center;min-height:76px}
+.tile:hover{background:var(--tileh)}
+.tile.in{border-color:var(--fire)}
+.grid.full .tile:not(.in){opacity:.5}
+button:focus-visible,.tile:focus-visible{outline:3px solid var(--fire);outline-offset:2px}
+.tx{display:flex;flex-direction:column;gap:1px}
+.tn{font-weight:600;font-size:15px;line-height:1.2;padding-right:22px}
+.tm{font-size:13px;color:var(--mut)}
+.te{font-size:13px;font-weight:600;display:inline-flex;align-items:center;gap:5px}
+.te i{width:9px;height:9px;border-radius:2px;background:var(--c)}
+.cnt{position:absolute;top:6px;right:6px;background:var(--fire);color:#1b0c00;font-weight:700;font-size:13px;border-radius:999px;padding:0 7px}
+.none{color:var(--mut);padding:18px 0;margin:0}
+.cards{display:grid;grid-template-columns:repeat(auto-fill,minmax(230px,1fr));gap:10px}
+.card{background:var(--tile);border-radius:14px;padding:14px;display:flex;flex-direction:column;gap:6px;border-top:5px solid var(--c)}
+.card h3{margin:0;font-size:18px;line-height:1.2}
+.card .res{font-weight:600;font-size:15px}
+.card .ing{font-size:14px;color:var(--mut)}
+.card p{margin:0;font-size:14px}
+.icons{display:flex;flex-wrap:wrap;gap:2px}
+.icons .w{position:relative;display:inline-flex}
+.icons .w b{position:absolute;right:-3px;bottom:-3px;background:var(--ink);color:var(--bg);font-size:13px;border-radius:999px;padding:0 5px;line-height:1.35}
+.go{margin-top:auto;align-self:flex-start;font-weight:700;font-size:14px;background:var(--fire);color:#1b0c00;border:0;border-radius:999px;padding:9px 16px;min-height:40px;cursor:pointer}
+.go:hover{filter:brightness(1.07)}
+.rlist{display:flex;flex-direction:column;border-top:1px solid var(--line);margin-top:12px}
+.rrow{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:4px 12px;align-items:center;padding:10px 0;border-bottom:1px solid var(--line)}
+.rrow b{font-size:16px}
+.rrow .req{font-size:14px;color:var(--mut);grid-column:1}
+.rrow .icons{grid-column:1}
+.rrow .go{grid-row:1/span 3;grid-column:2;margin:0}
+.bon{font-size:13px;font-weight:600;color:light-dark(#a13d00,#ff9a4d)}
+.sub{font:700 24px/1.1 "Barlow Condensed",Barlow,sans-serif;margin:22px 0 10px}
+.envhead{display:flex;flex-wrap:wrap;gap:10px 16px;align-items:center;justify-content:space-between;background:var(--tile);border-radius:12px;padding:12px 14px}
+.envhead p{margin:0}
+.envhead .note{color:var(--mut);font-size:15px}
+.btn2{font-weight:600;font-size:14px;border:1px solid var(--line);background:var(--bg);color:var(--ink);border-radius:999px;padding:8px 14px;min-height:40px;cursor:pointer}
+.btn2.hot{background:var(--fire);border-color:var(--fire);color:#1b0c00}
+.btn2:disabled{opacity:.45;cursor:default}
+.miss{font-size:15px;color:var(--mut);margin:12px 0 0}
+.miss b{color:var(--ink);font-weight:600}
+.mk summary{font:700 24px/1.1 "Barlow Condensed",Barlow,sans-serif;cursor:pointer;margin-top:22px;min-height:32px}
+.mk .rlist{max-height:560px;overflow:auto}
+.ef2{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:8px;align-items:center}
+.ef2 label{display:flex;gap:8px;align-items:center;font-size:15px;white-space:nowrap;min-height:44px}
+.ef2 input[type=checkbox]{width:20px;height:20px;accent-color:var(--fire)}
+.elist{display:grid;grid-template-columns:repeat(auto-fill,minmax(250px,1fr));gap:8px;margin-top:2px}
+.itile{display:grid;grid-template-columns:40px minmax(0,1fr) auto;gap:10px;align-items:center;background:var(--tile);border-radius:12px;padding:6px 8px 6px 10px;border:2px solid transparent;cursor:pointer}
+.itile.on{border-color:var(--fire)}
+.itile .ic{--s:40px}
+.step{display:flex;align-items:center;gap:2px}
+.step button{width:40px;height:40px;border-radius:10px;border:1px solid var(--line);background:var(--bg);color:var(--ink);font-size:21px;font-weight:600;cursor:pointer;line-height:1}
+.step button:disabled{opacity:.35;cursor:default}
+.step span{min-width:30px;text-align:center;font-weight:700;font-variant-numeric:tabular-nums}
+.step span.z{color:var(--mut);font-weight:500}
+.rules{background:var(--tile);padding-block:clamp(28px,4vw,56px)}
+.rules h2{font:700 clamp(28px,3.4vw,38px)/1.05 "Barlow Condensed",Barlow,sans-serif;margin:0 0 18px}
+.rgrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,280px),1fr));gap:22px 32px}
+.rgrid h3{margin:0 0 4px;font-size:18px}
+.rgrid p{margin:0;font-size:16px}
+.scroll{overflow-x:auto;margin-top:26px}
+table{border-collapse:collapse;width:100%;font-size:15px}
+th,td{text-align:left;padding:8px 10px;border-bottom:1px solid var(--line);white-space:nowrap}
+th{font-weight:600;color:var(--mut)}
+td.n,th.n{text-align:right;font-variant-numeric:tabular-nums}
+.sw{display:inline-block;width:10px;height:10px;border-radius:2px;background:var(--c);margin-right:7px}
+footer.wrap{padding-block:22px 40px;color:var(--mut);font-size:14px}
+footer a{color:inherit}
+.bar{position:fixed;left:0;right:0;bottom:0;z-index:5;background:var(--iron);color:var(--ironink);display:flex;align-items:center;gap:12px;padding:10px max(16px,env(safe-area-inset-right,0px)) calc(10px + env(safe-area-inset-bottom,0px)) max(16px,env(safe-area-inset-left,0px));transform:translateY(110%);transition:transform .2s;box-shadow:0 -2px 10px #0003}
+.bar.show{transform:none}
+.bar .bn{font-weight:700;flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.bar .bv{white-space:nowrap;color:var(--ironmut)}
+@media(min-width:760px){.bar{display:none}}
+@media(max-width:759px){.main{padding-bottom:90px}}
+@media(max-width:600px){table{font-size:13px}th,td{padding:6px 5px}}
+@media(max-width:420px){.tabs button{font-size:14px}}
+@keyframes nud{0%,100%{transform:none}30%{transform:translateX(-5px)}65%{transform:translateX(5px)}}
+.pot.nud{animation:nud .25s}
+@media(prefers-reduced-motion:reduce){.pot.nud{animation:none}.bar{transition:none}}
+html{background:var(--bg)}
+body{padding-top:env(safe-area-inset-top,0px)}
+.eacts{display:flex;gap:8px;flex-wrap:wrap}
+#scan{position:fixed;inset:0;z-index:50;background:#000;color:#fff;display:flex;flex-direction:column}
+#scan[hidden],#scanlive[hidden],#scanrev[hidden]{display:none}
+#scanlive{flex:1;display:flex;flex-direction:column;min-height:0}
+.camwrap{position:relative;flex:1;min-height:0;overflow:hidden;background:#000}
+#cam,#ov{position:absolute;inset:0;width:100%;height:100%}
+#cam{object-fit:cover}
+.stop{position:absolute;top:0;left:0;right:0;padding:calc(env(safe-area-inset-top,0px) + 12px) max(16px,env(safe-area-inset-right,0px)) 18px max(16px,env(safe-area-inset-left,0px));background:linear-gradient(#000d,#0000);display:flex;gap:12px;align-items:flex-start}
+.stop p{margin:0;flex:1;font-weight:600;font-size:16px;text-shadow:0 1px 3px #000}
+.sx{flex:none;width:44px;height:44px;border-radius:50%;border:0;background:#ffffff26;color:#fff;font-size:24px;cursor:pointer}
+.sbot{background:#0f1f16;padding:12px max(16px,env(safe-area-inset-right,0px)) calc(12px + env(safe-area-inset-bottom,0px)) max(16px,env(safe-area-inset-left,0px));display:grid;gap:10px}
+.srow{display:flex;align-items:center;gap:12px}
+.srow span{flex:1;font-size:15px;color:#cfe0d4}
+.slist{display:flex;gap:6px;overflow-x:auto;min-height:52px;padding-bottom:2px}
+.sitem{position:relative;flex:none;background:#21493a;border-radius:10px;padding:4px;display:inline-flex}
+.sitem.un{outline:2px solid #ffd23f;outline-offset:-2px}
+.sitem b{position:absolute;right:-2px;bottom:-2px;background:#ff7a1a;color:#1b0c00;font-size:13px;border-radius:999px;padding:0 5px;line-height:1.35}
+.go:disabled{opacity:.45;cursor:default}
+#scanrev{flex:1;overflow:auto;background:var(--bg);color:var(--ink);padding:calc(env(safe-area-inset-top,0px) + 18px) max(16px,env(safe-area-inset-right,0px)) calc(18px + env(safe-area-inset-bottom,0px)) max(16px,env(safe-area-inset-left,0px))}
+#scanrev h2{font:700 30px/1.1 "Barlow Condensed",Barlow,sans-serif;margin:0 0 6px}
+#revsum{color:var(--mut);margin:0 0 14px}
+.rv{display:grid;grid-template-columns:44px minmax(0,1fr) 40px;gap:10px;align-items:start;padding:12px 0;border-bottom:1px solid var(--line)}
+.rv.un{background:light-dark(#fff6d6,#2b2610);margin:0 -10px;padding:12px 10px;border-radius:10px}
+.rvt{display:flex;flex-direction:column;gap:6px}
+.rvt b{font-size:16px}
+.rvw{font-size:14px;color:light-dark(#7a5a00,#ffd36a)}
+.cn{display:flex;gap:4px;flex-wrap:wrap}
+.cn button{min-width:44px;height:40px;border-radius:10px;border:1px solid var(--line);background:var(--bg);color:var(--ink);font-weight:600;font-size:15px;cursor:pointer}
+.cn button[aria-pressed=true]{background:var(--fire);border-color:var(--fire);color:#1b0c00}
+.alts{display:flex;align-items:center;gap:4px;font-size:14px;color:var(--mut)}
+.alts button{border:1px solid var(--line);background:var(--tile);border-radius:10px;padding:2px;cursor:pointer;display:inline-flex}
+.rx{width:40px;height:40px;border-radius:10px;border:1px solid var(--line);background:var(--bg);color:var(--ink);font-size:20px;cursor:pointer}
+.revacts{display:flex;flex-wrap:wrap;gap:8px;margin-top:18px}
+</style>
+</head>
+<body>
+
+<header class="wrap">
+  <div>
+    <h1>BotW Yemek Hesaplayıcı</h1>
+    <p class="lede">Tencereye en fazla 5 malzeme at, yemeğin adı, canı, etkisi ve süresi anında çıksın. Kalp ve stamina sayını oyunundakine göre ayarla, öneriler gereğinden fazla malzeme harcamasın. Elimdekiler sekmesinde kamerayı televizyona tutup envanterini okutabilirsin.</p>
+  </div>
+  <div class="me">
+    <label class="mi">Kalbin <select id="meh"></select></label>
+    <label class="mi">Staminan <select id="mes"></select></label>
+  </div>
+</header>
+
+<div class="wrap main">
+  <section class="pot" id="pot" aria-live="polite">
+    <div class="ptop">
+      <div class="dots" id="dots"></div>
+      <span class="plbl" id="plbl"></span>
+      <div class="act"><button class="ghost" id="undo">Geri al</button><button class="ghost" id="clear">Boşalt</button></div>
+    </div>
+    <div class="chips" id="chips"></div>
+    <div id="out"></div>
+  </section>
+
+  <section>
+    <div class="tabs" role="tablist">
+      <button role="tab" id="t-mal" aria-selected="true">Malzemeler</button>
+      <button role="tab" id="t-env" aria-selected="false">Elimdekiler</button>
+      <button role="tab" id="t-haz" aria-selected="false">Hazır</button>
+      <button role="tab" id="t-kit" aria-selected="false">Tarifler</button>
+    </div>
+
+    <div id="p-mal">
+      <div class="filters">
+        <input type="search" id="q" placeholder="Malzeme ara (ör. radish)" autocomplete="off">
+        <select id="ef" aria-label="Etkiye göre"></select>
+        <select id="so" aria-label="Sıralama">
+          <option value="kat">Kategoriye göre</option>
+          <option value="can">En çok can</option>
+          <option value="guc">En güçlü etki</option>
+          <option value="ad">A'dan Z'ye</option>
+        </select>
+      </div>
+      <div class="cats" id="cats"></div>
+      <div class="grid" id="grid"></div>
+    </div>
+
+    <div id="p-env" hidden>
+      <div class="envhead"><p id="envn"></p><div class="eacts"><button class="go" id="scanbtn">Kamerayla tara</button><button class="btn2" id="envclr">Temizle</button></div></div>
+      <h3 class="sub">Bunlarla yapabileceğin en iyiler</h3>
+      <div class="cards" id="gcards"></div>
+      <p class="miss" id="miss"></p>
+      <details class="mk" open><summary id="mksum">Tarif kitabından yapabildiklerin</summary><div class="rlist" id="mklist"></div></details>
+      <h3 class="sub">Elindeki malzemeleri işaretle</h3>
+      <div class="ef2"><input type="search" id="eq" placeholder="Malzeme ara" autocomplete="off"><label><input type="checkbox" id="emine"> Sadece elimdekiler</label></div>
+      <div class="cats" id="ecats"></div>
+      <div class="elist" id="egrid"></div>
+    </div>
+
+    <div id="p-haz" hidden><div class="cards" id="cards"></div></div>
+
+    <div id="p-kit" hidden>
+      <input type="search" id="rq" placeholder="Tarif ya da malzeme ara (ör. crepe, rice)" autocomplete="off">
+      <div class="rlist" id="rlist"></div>
+    </div>
+  </section>
+</div>
+
+<section class="rules">
+  <div class="wrap">
+    <h2>Pişirmenin kuralları</h2>
+    <div class="rgrid">
+      <div><h3>Can ikiye katlanır</h3><p>Tencerede her malzemenin canı ikiye katlanır, ateşte kızartınca sadece 1,5 katı. Bir yemek en fazla 30 kalp verir ama kalbin daha azsa fazlası boşa gider. Birkaç tarifin küçük bir bonusu var, mesela Wildberry Crepe +4 kalp.</p></div>
+      <div><h3>Hearty malzemeler</h3><p>Tek bir tanesi bile bütün kalpleri doldurur, üstüne geçici sarı kalp verir. En fazla 25 sarı kalp, onu da 5 Big Hearty Radish verir.</p></div>
+      <div><h3>Etkiler karışmaz</h3><p>Aynı tencereye iki farklı etki girerse ikisi de kaybolur, sadece can kalır. Et, pirinç gibi etkisiz malzemeler etkiyi bozmaz, süreyi uzatır.</p></div>
+      <div><h3>Seviye ve süre</h3><p>Aynı etkiden ne kadar çok koyarsan seviye o kadar yükselir. Her malzeme 30 saniye ekler, etki malzemesi daha fazlasını. Süre en fazla 30:00.</p></div>
+      <div><h3>Karttaki sayı</h3><p>Malzeme kartında etki adının yanındaki sayı o malzemenin gücü. Tencerede aynı etkinin güçleri toplanır, aşağıdaki tablodaki eşiği geçince seviye atlar.</p></div>
+      <div><h3>İksir nasıl olur</h3><p>En az bir böcek, kurbağa, kertenkele ya da kelebek ve en az bir canavar parçası lazım. Yengeç ve salyangoz böcek değil, balık sayılır. Canavar parçası süreyi uzatır: horn türü +1:10, fang türü +1:50, guts ve tail türü +3:10. Yemeğe canavar parçası katarsan yemek bozulur.</p></div>
+      <div><h3>Kritik pişirme</h3><p>Pişerken müzik değişip yemek parlarsa kritik olmuştur: rastgele +3 kalp, +1 seviye ya da +5:00 süre. Her farklı malzeme %5 şans ekler, Star Fragment ya da ejderha parçası kritiği garantiler. Kanlı ay gecesi 23:30 ile 00:15 arasında pişirirsen de garanti.</p></div>
+      <div><h3>Peri</h3><p>Tek başına pişirirsen Fairy Tonic, 7 kalp. Bir yemeğe eklersen +10 kalp. Ama cebinde dururken ölünce seni kaldırıyor, çoğu zaman öyle saklamak daha iyi.</p></div>
+    </div>
+    <div class="scroll"><table id="etab"></table></div>
+  </div>
+</section>
+
+<footer class="wrap">Sayılar oyun dosyalarından çıkarılmış topluluk verisine dayanıyor: <a href="https://github.com/Pistonite/botw-recipe">Pistonite/botw-recipe</a> ve <a href="https://github.com/savage13/cooking">savage13/cooking</a>. Malzeme görselleri oyundan, <a href="https://zeldawiki.wiki">Zelda Wiki</a> üzerinden. Hayran yapımı bir yardımcıdır, resmî değildir.</footer>
+
+<div id="scan" hidden>
+  <div id="scanlive">
+    <div class="camwrap"><video id="cam" playsinline muted autoplay></video><canvas id="ov"></canvas>
+      <div class="stop"><p id="scanmsg"></p><button class="sx" id="scanx" aria-label="Kapat">×</button></div></div>
+    <div class="sbot">
+      <div class="srow"><span id="scancount"></span><button class="go" id="scandone" disabled>Bitti</button></div>
+      <div class="slist" id="scanlist"></div>
+    </div>
+  </div>
+  <div id="scanrev" hidden>
+    <h2>Okunanları kontrol et</h2>
+    <p id="revsum"></p>
+    <div id="revlist"></div>
+    <div class="revacts"><button class="go" id="revrep">Çantamı bununla değiştir</button><button class="btn2" id="revadd">Çantama ekle</button><button class="btn2" id="revback">Taramaya dön</button><button class="btn2" id="revcancel">Vazgeç</button></div>
+  </div>
+</div>
+
+<div class="bar" id="bar"><span class="bn" id="bn"></span><span class="bv" id="bv"></span><button class="ghost" id="up">Tencere</button></div>
+
+<script src="scan-core.js"></script>
+<script>
+{
+const RAW=[
+["Hearty Durian","meyve","F",12,"hearty",16,0,0,0],
+["Palm Fruit","meyve","F",4,"",0,0,0,0],
+["Apple","meyve","F",2,"",0,0,0,0],
+["Wildberry","meyve","F",2,"",0,0,0,0],
+["Hydromelon","meyve","F",2,"chilly",1,0,0,0],
+["Spicy Pepper","meyve","F",2,"spicy",1,0,0,0],
+["Voltfruit","meyve","F",2,"electro",1,0,0,0],
+["Fleet-Lotus Seeds","meyve","F",2,"hasty",2,0,0,0],
+["Mighty Bananas","meyve","F",2,"mighty",2,0,0,0],
+["Big Hearty Truffle","mantar","M",12,"hearty",16,0,0,0],
+["Hearty Truffle","mantar","M",8,"hearty",4,0,0,0],
+["Endura Shroom","mantar","M",4,"enduring",1,0,0,0],
+["Hylian Shroom","mantar","M",2,"",0,0,0,0],
+["Stamella Shroom","mantar","M",2,"energizing",1,0,0,0],
+["Chillshroom","mantar","M",2,"chilly",2,0,0,0],
+["Sunshroom","mantar","M",2,"spicy",2,0,0,0],
+["Zapshroom","mantar","M",2,"electro",2,0,0,0],
+["Rushroom","mantar","M",2,"hasty",1,0,0,0],
+["Razorshroom","mantar","M",2,"mighty",2,0,0,0],
+["Ironshroom","mantar","M",2,"tough",2,0,0,0],
+["Silent Shroom","mantar","M",2,"sneaky",2,0,0,0],
+["Big Hearty Radish","bitki","P",16,"hearty",20,0,0,0],
+["Hearty Radish","bitki","P",10,"hearty",12,0,0,0],
+["Endura Carrot","bitki","P",8,"enduring",4,0,0,0],
+["Hyrule Herb","bitki","P",4,"",0,0,0,0],
+["Swift Carrot","bitki","P",2,"hasty",1,0,0,0],
+["Fortified Pumpkin","bitki","P",2,"tough",2,0,0,0],
+["Cool Safflina","bitki","P",0,"chilly",1,0,0,0],
+["Warm Safflina","bitki","P",0,"spicy",1,0,0,0],
+["Electric Safflina","bitki","P",0,"electro",1,0,0,0],
+["Swift Violet","bitki","P",0,"hasty",2,0,0,0],
+["Mighty Thistle","bitki","P",0,"mighty",1,0,0,0],
+["Armoranth","bitki","P",0,"tough",1,0,0,0],
+["Blue Nightshade","bitki","P",0,"sneaky",1,0,0,0],
+["Silent Princess","bitki","P",4,"sneaky",3,0,0,0],
+["Raw Gourmet Meat","et","T",12,"",0,0,0,0],
+["Raw Whole Bird","et","T",12,"",0,0,0,0],
+["Raw Prime Meat","et","T",6,"",0,0,0,0],
+["Raw Bird Thigh","et","T",6,"",0,0,0,0],
+["Raw Meat","et","T",4,"",0,0,0,0],
+["Raw Bird Drumstick","et","T",4,"",0,0,0,0],
+["Hearty Salmon","balik","S",16,"hearty",16,0,0,0],
+["Hearty Blueshell Snail","balik","S",12,"hearty",12,0,0,0],
+["Hearty Bass","balik","S",8,"hearty",8,0,0,0],
+["Hyrule Bass","balik","S",4,"",0,0,0,0],
+["Staminoka Bass","balik","S",4,"energizing",4,0,0,0],
+["Chillfin Trout","balik","S",4,"chilly",3,0,0,0],
+["Sizzlefin Trout","balik","S",4,"spicy",3,0,0,0],
+["Voltfin Trout","balik","S",4,"electro",3,0,0,0],
+["Stealthfin Trout","balik","S",4,"sneaky",2,0,0,0],
+["Mighty Carp","balik","S",4,"mighty",2,0,0,0],
+["Armored Carp","balik","S",4,"tough",2,0,0,0],
+["Sanke Carp","balik","S",4,"",0,0,0,0],
+["Mighty Porgy","balik","S",4,"mighty",3,0,0,0],
+["Armored Porgy","balik","S",4,"tough",3,0,0,0],
+["Sneaky River Snail","balik","S",4,"sneaky",1,0,0,0],
+["Razorclaw Crab","balik","S",4,"mighty",2,0,0,0],
+["Ironshell Crab","balik","S",4,"tough",2,0,0,0],
+["Bright-Eyed Crab","balik","S",4,"energizing",2,0,0,0],
+["Courser Bee Honey","temel","X",8,"energizing",2,0,0,0],
+["Hylian Rice","temel","X",4,"",0,30,0,0],
+["Bird Egg","temel","X",4,"",0,60,0,10],
+["Tabantha Wheat","temel","X",4,"",0,30,0,0],
+["Fresh Milk","temel","X",2,"",0,50,0,0],
+["Acorn","temel","X",1,"",0,20,2,0],
+["Chickaloo Tree Nut","temel","X",1,"",0,10,2,0],
+["Cane Sugar","temel","X",0,"",0,50,0,30],
+["Goat Butter","temel","X",0,"",0,50,0,10],
+["Goron Spice","temel","X",0,"",0,60,0,10],
+["Rock Salt","temel","X",0,"",0,30,0,0],
+["Winterwing Butterfly","bocek","I",0,"chilly",1,0,0,0],
+["Summerwing Butterfly","bocek","I",0,"spicy",1,0,0,0],
+["Thunderwing Butterfly","bocek","I",0,"electro",1,0,0,0],
+["Smotherwing Butterfly","bocek","I",0,"fireproof",2,0,0,0],
+["Cold Darner","bocek","I",0,"chilly",2,0,0,0],
+["Warm Darner","bocek","I",0,"spicy",2,0,0,0],
+["Electric Darner","bocek","I",0,"electro",2,0,0,0],
+["Restless Cricket","bocek","I",0,"energizing",1,0,0,0],
+["Bladed Rhino Beetle","bocek","I",0,"mighty",1,0,0,0],
+["Rugged Rhino Beetle","bocek","I",0,"tough",1,0,0,0],
+["Energetic Rhino Beetle","bocek","I",0,"energizing",6,0,0,0],
+["Sunset Firefly","bocek","I",0,"sneaky",1,0,0,0],
+["Hot-Footed Frog","bocek","I",0,"hasty",2,0,0,0],
+["Tireless Frog","bocek","I",8,"enduring",2,0,0,0],
+["Hightail Lizard","bocek","I",0,"hasty",1,0,0,0],
+["Hearty Lizard","bocek","I",16,"hearty",16,0,0,0],
+["Fireproof Lizard","bocek","I",0,"fireproof",1,0,0,0],
+["Bokoblin Horn","canavar","E",0,"",0,40,0,0],
+["Bokoblin Fang","canavar","E",0,"",0,80,0,10],
+["Bokoblin Guts","canavar","E",0,"",0,160,0,30],
+["Moblin Horn","canavar","E",0,"",0,40,0,0],
+["Moblin Fang","canavar","E",0,"",0,80,0,10],
+["Moblin Guts","canavar","E",0,"",0,160,0,30],
+["Lizalfos Horn","canavar","E",0,"",0,40,0,0],
+["Lizalfos Talon","canavar","E",0,"",0,80,0,10],
+["Lizalfos Tail","canavar","E",0,"",0,160,0,30],
+["Icy Lizalfos Tail","canavar","E",0,"",0,160,0,30],
+["Red Lizalfos Tail","canavar","E",0,"",0,160,0,30],
+["Yellow Lizalfos Tail","canavar","E",0,"",0,160,0,30],
+["Lynel Horn","canavar","E",0,"",0,40,0,0],
+["Lynel Hoof","canavar","E",0,"",0,80,0,10],
+["Lynel Guts","canavar","E",0,"",0,160,0,30],
+["Chuchu Jelly","canavar","E",0,"",0,40,0,0],
+["White Chuchu Jelly","canavar","E",0,"",0,80,0,10],
+["Red Chuchu Jelly","canavar","E",0,"",0,80,0,10],
+["Yellow Chuchu Jelly","canavar","E",0,"",0,80,0,10],
+["Keese Wing","canavar","E",0,"",0,40,0,0],
+["Ice Keese Wing","canavar","E",0,"",0,80,0,10],
+["Fire Keese Wing","canavar","E",0,"",0,80,0,10],
+["Electric Keese Wing","canavar","E",0,"",0,80,0,10],
+["Keese Eyeball","canavar","E",0,"",0,160,0,30],
+["Octorok Tentacle","canavar","E",0,"",0,40,0,0],
+["Octorok Eyeball","canavar","E",0,"",0,80,0,10],
+["Octo Balloon","canavar","E",0,"",0,40,0,0],
+["Molduga Fin","canavar","E",0,"",0,80,0,10],
+["Molduga Guts","canavar","E",0,"",0,160,0,30],
+["Hinox Toenail","canavar","E",0,"",0,40,0,0],
+["Hinox Tooth","canavar","E",0,"",0,80,0,10],
+["Hinox Guts","canavar","E",0,"",0,160,0,30],
+["Ancient Screw","canavar","E",0,"",0,40,0,0],
+["Ancient Spring","canavar","E",0,"",0,40,0,0],
+["Ancient Gear","canavar","E",0,"",0,80,0,10],
+["Ancient Shaft","canavar","E",0,"",0,80,0,10],
+["Ancient Core","canavar","E",0,"",0,160,0,30],
+["Giant Ancient Core","canavar","E",0,"",0,160,0,30],
+["Star Fragment","ozel","X",0,"",0,60,0,100],
+["Dinraal's Scale","ozel","X",0,"",0,60,5,100],
+["Dinraal's Claw","ozel","X",0,"",0,180,8,100],
+["Shard of Dinraal's Fang","ozel","X",0,"",0,600,10,100],
+["Shard of Dinraal's Horn","ozel","X",0,"",0,1800,15,100],
+["Naydra's Scale","ozel","X",0,"",0,60,5,100],
+["Naydra's Claw","ozel","X",0,"",0,180,8,100],
+["Shard of Naydra's Fang","ozel","X",0,"",0,600,10,100],
+["Shard of Naydra's Horn","ozel","X",0,"",0,1800,15,100],
+["Farosh's Scale","ozel","X",0,"",0,60,5,100],
+["Farosh's Claw","ozel","X",0,"",0,180,8,100],
+["Shard of Farosh's Fang","ozel","X",0,"",0,600,10,100],
+["Shard of Farosh's Horn","ozel","X",0,"",0,1800,15,100],
+["Fairy","ozel","",20,"",0,0,0,0],
+["Monster Extract","ozel","X",0,"",0,0,0,0]
+];
+const IT=RAW.map(([n,u,t,hp,e,p,st,sh,sr],i)=>({n,u,t,hp,e,p,st,sh,sr,i}));
+const BY={};IT.forEach(x=>{BY[x.n]=x});
+const SCAN_NAMES=["Hearty Durian", "Palm Fruit", "Apple", "Wildberry", "Hydromelon", "Spicy Pepper", "Voltfruit", "Fleet-Lotus Seeds", "Mighty Bananas", "Big Hearty Truffle", "Hearty Truffle", "Endura Shroom", "Hylian Shroom", "Stamella Shroom", "Chillshroom", "Sunshroom", "Zapshroom", "Rushroom", "Razorshroom", "Ironshroom", "Silent Shroom", "Big Hearty Radish", "Hearty Radish", "Endura Carrot", "Hyrule Herb", "Swift Carrot", "Fortified Pumpkin", "Cool Safflina", "Warm Safflina", "Electric Safflina", "Swift Violet", "Mighty Thistle", "Armoranth", "Blue Nightshade", "Silent Princess", "Raw Gourmet Meat", "Raw Whole Bird", "Raw Prime Meat", "Raw Bird Thigh", "Raw Meat", "Raw Bird Drumstick", "Courser Bee Honey", "Hylian Rice", "Bird Egg", "Tabantha Wheat", "Fresh Milk", "Acorn", "Chickaloo Tree Nut", "Cane Sugar", "Goat Butter", "Goron Spice", "Rock Salt", "Monster Extract", "Star Fragment", "Dinraal's Scale", "Dinraal's Claw", "Shard of Dinraal's Fang", "Shard of Dinraal's Horn", "Naydra's Scale", "Naydra's Claw", "Shard of Naydra's Fang", "Shard of Naydra's Horn", "Farosh's Scale", "Farosh's Claw", "Shard of Farosh's Fang", "Shard of Farosh's Horn", "Hearty Salmon", "Hearty Blueshell Snail", "Hearty Bass", "Hyrule Bass", "Staminoka Bass", "Chillfin Trout", "Sizzlefin Trout", "Voltfin Trout", "Stealthfin Trout", "Mighty Carp", "Armored Carp", "Sanke Carp", "Mighty Porgy", "Armored Porgy", "Sneaky River Snail", "Razorclaw Crab", "Ironshell Crab", "Bright-Eyed Crab", "Fairy", "Winterwing Butterfly", "Summerwing Butterfly", "Thunderwing Butterfly", "Smotherwing Butterfly", "Cold Darner", "Warm Darner", "Electric Darner", "Restless Cricket", "Bladed Rhino Beetle", "Rugged Rhino Beetle", "Energetic Rhino Beetle", "Sunset Firefly", "Hot-Footed Frog", "Tireless Frog", "Hightail Lizard", "Hearty Lizard", "Fireproof Lizard", "Flint", "Amber", "Opal", "Luminous Stone", "Topaz", "Ruby", "Sapphire", "Diamond", "Bokoblin Horn", "Bokoblin Fang", "Bokoblin Guts", "Moblin Horn", "Moblin Fang", "Moblin Guts", "Lizalfos Horn", "Lizalfos Talon", "Lizalfos Tail", "Icy Lizalfos Tail", "Red Lizalfos Tail", "Yellow Lizalfos Tail", "Lynel Horn", "Lynel Hoof", "Lynel Guts", "Chuchu Jelly", "White Chuchu Jelly", "Red Chuchu Jelly", "Yellow Chuchu Jelly", "Keese Wing", "Ice Keese Wing", "Fire Keese Wing", "Electric Keese Wing", "Keese Eyeball", "Octorok Tentacle", "Octorok Eyeball", "Octo Balloon", "Molduga Fin", "Molduga Guts", "Hinox Toenail", "Hinox Tooth", "Hinox Guts", "Ancient Screw", "Ancient Spring", "Ancient Gear", "Ancient Shaft", "Ancient Core", "Giant Ancient Core", "Wood"];const SPR={};SCAN_NAMES.forEach((n,k)=>{SPR[n]=k});
+const EFF={
+ hearty:{en:'Hearty',tr:'Sarı kalp',c:'#f7bb0a',d:'Bütün kalpleri doldurur, üstüne geçici sarı kalp verir'},
+ energizing:{en:'Energizing',tr:'Stamina doldurur',c:'#2fb45a',d:'Stamina çemberini doldurur'},
+ enduring:{en:'Enduring',tr:'Ekstra stamina',c:'#9ccc2c',d:'Geçici sarı stamina ekler'},
+ mighty:{en:'Mighty',tr:'Saldırı',c:'#ef4a3c',base:20,l2:5,l3:7,d:'Saldırı gücün artar'},
+ tough:{en:'Tough',tr:'Savunma',c:'#4a7bea',base:20,l2:5,l3:7,d:'Savunman artar'},
+ hasty:{en:'Hasty',tr:'Hız',c:'#18b0d0',base:30,l2:5,l3:7,d:'Daha hızlı koşar, tırmanırsın'},
+ sneaky:{en:'Sneaky',tr:'Gizlilik',c:'#9461e8',base:90,l2:6,l3:9,d:'Daha sessiz hareket edersin'},
+ electro:{en:'Electro',tr:'Elektrik direnci',c:'#d8c200',base:120,l2:4,l3:6,d:'Elektrik hasarına dayanıklı olursun'},
+ spicy:{en:'Spicy',tr:'Soğuğa direnç',c:'#f5871e',base:120,l2:6,d:'Soğukta üşümezsin'},
+ chilly:{en:'Chilly',tr:'Sıcağa direnç',c:'#47b9ee',base:120,l2:6,d:'Sıcakta bunalmazsın'},
+ fireproof:{en:'Fireproof',tr:'Ateşe direnç',c:'#c8432a',base:120,l2:7,d:'Yanmaya karşı korur (Death Mountain)'}
+};
+const CATS=[['all','Hepsi'],['meyve','Meyve'],['mantar','Mantar'],['bitki','Bitki'],['et','Et'],['balik','Balık ve deniz'],['temel','Temel'],['bocek','Böcek'],['canavar','Canavar parçası'],['ozel','Özel']];
+const TAGTR={F:'herhangi bir meyve',M:'herhangi bir mantar',P:'herhangi bir bitki',T:'herhangi bir et',S:'herhangi bir balık ya da deniz ürünü',I:'herhangi bir böcek',E:'herhangi bir canavar parçası'};
+const CRAB='Razorclaw Crab|Ironshell Crab|Bright-Eyed Crab',PORGY='Mighty Porgy|Armored Porgy',VEG='Fortified Pumpkin|Swift Carrot|Endura Carrot',CARROT='Swift Carrot|Endura Carrot',SNAILCRAB='Hearty Blueshell Snail|Sneaky River Snail|'+CRAB;
+const mk=a=>({n:a[0],b:a[1],s:a[2].split(';')});
+const SINGLE=[['Fairy Tonic',-12,'Fairy'],['Sautéed Peppers',0,'Spicy Pepper'],['Omelet',0,'Bird Egg'],['Meat Skewer',0,'#T'],['Seafood Skewer',0,SNAILCRAB],['Fish Skewer',0,'#S'],['Mushroom Skewer',0,'#M'],['Honey Candy',-8,'Courser Bee Honey'],['Sautéed Nuts',-2,'Acorn|Chickaloo Tree Nut'],['Warm Milk',2,'Fresh Milk'],['Fried Wild Greens',0,'#P'],['Simmered Fruit',0,'#F']].map(mk);
+const MAIN=[['Fairy Tonic',-12,'Fairy;#I;#E'],['Fairy Tonic',-12,'Fairy;#E|#I'],['Elixir',0,'#E;#I'],['Dubious Food',0,'#E|#I'],
+['Fruitcake',4,'Apple|Wildberry;Wildberry|Voltfruit|Hydromelon|Mighty Bananas|Hearty Durian|Palm Fruit|Apple;Tabantha Wheat;Cane Sugar'],
+['Seafood Paella',8,PORGY+';Hearty Blueshell Snail;Hylian Rice;Goat Butter;Rock Salt'],
+['Monster Curry',0,'Hylian Rice;Goron Spice;Monster Extract'],['Monster Rice Balls',0,'Hylian Rice;Rock Salt;Monster Extract'],['Monster Cake',0,'Tabantha Wheat;Cane Sugar;Monster Extract;Goat Butter'],['Monster Soup',0,'Tabantha Wheat;Goat Butter;Fresh Milk;Monster Extract'],['Monster Stew',0,'Monster Extract;#T;#S'],
+['Creamy Heart Soup',0,'Hearty Radish|Big Hearty Radish;Voltfruit;Hydromelon;Fresh Milk'],['Clam Chowder',0,'Hearty Blueshell Snail;Tabantha Wheat;Fresh Milk;Goat Butter'],['Pumpkin Stew',0,'Fortified Pumpkin;Tabantha Wheat;Fresh Milk;Goat Butter'],
+['Gourmet Meat Stew',0,'Raw Gourmet Meat|Raw Whole Bird;Tabantha Wheat;Fresh Milk;Goat Butter'],['Prime Meat Stew',0,'Raw Prime Meat|Raw Bird Thigh;Tabantha Wheat;Fresh Milk;Goat Butter'],['Meat Stew',0,'Raw Meat|Raw Bird Drumstick;Tabantha Wheat;Fresh Milk;Goat Butter'],
+['Gourmet Meat Curry',0,'Raw Gourmet Meat;Hylian Rice;Goron Spice'],['Gourmet Poultry Curry',0,'Raw Whole Bird;Hylian Rice;Goron Spice'],['Prime Meat Curry',0,'Raw Prime Meat;Hylian Rice;Goron Spice'],['Prime Poultry Curry',0,'Raw Bird Thigh;Hylian Rice;Goron Spice'],['Meat Curry',0,'Raw Meat;Hylian Rice;Goron Spice'],['Poultry Curry',0,'Raw Bird Drumstick;Hylian Rice;Goron Spice'],
+['Seafood Curry',0,'Hearty Blueshell Snail|'+PORGY+';Hylian Rice;Goron Spice'],['Vegetable Curry',0,VEG+';Hylian Rice;Goron Spice'],
+['Pumpkin Pie',0,'Fortified Pumpkin;Tabantha Wheat;Cane Sugar;Goat Butter'],['Carrot Cake',0,CARROT+';Tabantha Wheat;Cane Sugar;Goat Butter'],
+['Wildberry Crepe',16,'Tabantha Wheat;Fresh Milk;Bird Egg;Cane Sugar;Wildberry'],['Honey Crepe',4,'Tabantha Wheat;Fresh Milk;Bird Egg;Cane Sugar;Courser Bee Honey'],['Plain Crepe',0,'Tabantha Wheat;Fresh Milk;Bird Egg;Cane Sugar'],
+['Apple Pie',0,'Apple;Tabantha Wheat;Goat Butter;Cane Sugar'],['Nutcake',0,'Tabantha Wheat;Goat Butter;Cane Sugar;Chickaloo Tree Nut|Acorn'],['Egg Tart',0,'Bird Egg;Tabantha Wheat;Goat Butter;Cane Sugar'],['Egg Pudding',0,'Bird Egg;Fresh Milk;Cane Sugar'],['Fried Bananas',0,'Mighty Bananas;Tabantha Wheat;Cane Sugar'],
+['Fruit Pie',0,'Tabantha Wheat;Goat Butter;Cane Sugar;#F'],['Meat Pie',0,'Tabantha Wheat;Goat Butter;Rock Salt;#T'],['Fish Pie',0,'Tabantha Wheat;Goat Butter;Rock Salt;#S'],
+['Salmon Meunière',0,'Hearty Salmon;Goat Butter;Tabantha Wheat'],['Salmon Risotto',0,'Hearty Salmon;Hylian Rice;Rock Salt;Goat Butter'],['Crab Risotto',0,CRAB+';Hylian Rice;Rock Salt;Goat Butter'],['Vegetable Risotto',0,VEG+';Hylian Rice;Rock Salt;Goat Butter'],['Mushroom Risotto',0,'Hylian Rice;Rock Salt;Goat Butter;#M'],
+['Cream of Mushroom Soup',0,'Rock Salt;Fresh Milk;#M;#P'],['Veggie Cream Soup',0,VEG+';Rock Salt;Fresh Milk'],['Creamy Meat Soup',0,'Rock Salt;Fresh Milk;#T;#P'],['Creamy Seafood Soup',0,'Rock Salt;Fresh Milk;#S;#P'],['Cream of Vegetable Soup',0,'Rock Salt;Fresh Milk;#P'],
+['Carrot Stew',0,CARROT+';Goat Butter;Fresh Milk;Tabantha Wheat'],['Mushroom Omelet',0,'Bird Egg;Rock Salt;Goat Butter;#M'],['Crab Omelet with Rice',0,CRAB+';Bird Egg;Hylian Rice;Rock Salt'],
+['Gourmet Poultry Pilaf',0,'Raw Whole Bird;Bird Egg;Hylian Rice;Goat Butter'],['Prime Poultry Pilaf',0,'Raw Bird Thigh;Bird Egg;Hylian Rice;Goat Butter'],['Poultry Pilaf',0,'Raw Bird Drumstick;Bird Egg;Hylian Rice;Goat Butter'],
+['Vegetable Omelet',0,'Bird Egg;Goat Butter;Rock Salt;#P'],['Porgy Meunière',0,PORGY+';Goat Butter;Tabantha Wheat'],['Seafood Meunière',0,'Goat Butter;Tabantha Wheat;#S'],['Seafood Fried Rice',0,'Hearty Blueshell Snail|'+PORGY+';Hylian Rice;Rock Salt'],['Curry Pilaf',0,'Goron Spice;Hylian Rice;Goat Butter'],
+['Gourmet Meat and Rice Bowl',0,'Raw Gourmet Meat;Hylian Rice;Rock Salt'],['Prime Meat and Rice Bowl',0,'Raw Prime Meat;Hylian Rice;Rock Salt'],['Meat and Rice Bowl',0,'Raw Meat;Hylian Rice;Rock Salt'],['Fried Egg and Rice',0,'Hylian Rice;Bird Egg'],
+['Meaty Rice Balls',0,'Hylian Rice;#T'],['Seafood Rice Balls',0,'Hylian Rice;#S'],['Mushroom Rice Balls',0,'Hylian Rice;#M'],['Veggie Rice Balls',0,'Hylian Rice;#P'],
+['Hot Buttered Apple',4,'Apple;Goat Butter'],['Meat-Stuffed Pumpkin',0,'Fortified Pumpkin;#T'],['Glazed Meat',0,'Courser Bee Honey;#T'],['Glazed Seafood',0,'Courser Bee Honey;#S'],['Glazed Mushrooms',0,'Courser Bee Honey;#M'],['Glazed Veggies',0,'Courser Bee Honey;#P'],
+['Curry Rice',0,'Hylian Rice;Goron Spice'],['Honeyed Apple',0,'Apple;Courser Bee Honey'],['Honeyed Fruits',0,'Courser Bee Honey;#F'],
+['Gourmet Spiced Meat Skewer',0,'Raw Gourmet Meat;Goron Spice'],['Prime Spiced Meat Skewer',0,'Raw Prime Meat;Goron Spice'],['Spiced Meat Skewer',0,'Raw Meat;Goron Spice'],['Fragrant Mushroom Sauté',0,'Goron Spice;#M'],['Herb Sauté',0,'Goron Spice;#P'],
+['Salt-Grilled Gourmet Meat',0,'Raw Gourmet Meat|Raw Whole Bird;Rock Salt'],['Salt-Grilled Prime Meat',0,'Raw Bird Thigh|Raw Prime Meat;Rock Salt'],['Salt-Grilled Meat',0,'Raw Meat|Raw Bird Drumstick;Rock Salt'],
+['Crab Stir-Fry',0,CRAB+';Goron Spice'],['Salt-Grilled Crab',0,CRAB+';Rock Salt'],['Salt-Grilled Fish',0,'Rock Salt;#S'],['Wheat Bread',0,'Tabantha Wheat;Rock Salt'],['Salt-Grilled Greens',0,'Rock Salt;#P'],['Salt-Grilled Mushrooms',0,'Rock Salt;#M'],
+['Copious Meat Skewers',0,'#T;#T;#T;#T'],['Copious Fried Wild Greens',0,'#P;#P;#P;#P'],['Copious Simmered Fruit',0,'#F;#F;#F;#F'],['Copious Mushroom Skewers',0,'#M;#M;#M;#M'],['Copious Seafood Skewers',0,'#S;#S;#S;#S'],
+['Meat Skewer',0,'#T;#T'],['Simmered Fruit',0,'#F;#F'],['Mushroom Skewer',0,'#M;#M'],['Fried Wild Greens',0,'#P;#P'],
+['Gourmet Meat and Seafood Fry',0,'Raw Gourmet Meat|Raw Whole Bird;#S'],['Prime Meat and Seafood Fry',0,'Raw Prime Meat|Raw Bird Thigh;#S'],['Meat and Seafood Fry',0,'#T;#S'],
+['Pepper Steak',0,'Spicy Pepper;#T'],['Pepper Seafood',0,'Spicy Pepper;#S'],['Seafood Skewer',0,SNAILCRAB+';#S'],['Fish Skewer',0,'#S;#S'],
+['Steamed Meat',0,'#P;#T'],['Steamed Fish',0,'#P;#S'],['Steamed Mushrooms',0,'#P;#M'],['Steamed Fruit',0,'#P;#F'],
+['Fish and Mushroom Skewer',0,'#M;#S'],['Meat and Mushroom Skewer',0,'#M;#T'],['Fruit and Mushroom Mix',0,'#M;#F'],
+['Meat Skewer',0,'#T'],['Seafood Skewer',0,SNAILCRAB],['Fish Skewer',0,'#S'],['Omelet',0,'Bird Egg'],['Warm Milk',0,'Fresh Milk'],['Mushroom Skewer',0,'#M'],['Fried Wild Greens',0,'#P'],['Simmered Fruit',0,'#F'],['Sautéed Nuts',0,'Acorn|Chickaloo Tree Nut'],['Fairy Tonic',-12,'Fairy']].map(mk);
+
+const esc=s=>String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const fmt=s=>Math.floor(s/60)+':'+String(s%60).padStart(2,'0');
+const H=q=>{const w=Math.floor(q/4),f=['','¼','½','¾'][q%4];return (w||!f?String(w):'')+f};
+const W=w=>w.toLocaleString('tr-TR',{maximumFractionDigits:1});
+const F5=w=>Math.round(w*5);
+const isOk=(x,a)=>a[0]==='#'?x.t===a.slice(1):x.n===a;
+const slotOk=(x,s)=>s.split('|').some(a=>isOk(x,a));
+function fits(uq,slots){
+  const used=uq.map(()=>false);
+  const go=k=>{if(k===slots.length)return true;for(let i=0;i<uq.length;i++){if(!used[i]&&slotOk(uq[i],slots[k])){used[i]=true;if(go(k+1))return true;used[i]=false}}return false};
+  return go(0);
+}
+const ENTAB=[0,.2,.4,.8,1,1.4,1.6,1.8,2.2,2.4,2.8,3];
+const ME={h:10,s5:7};
+
+function cook(items){
+  if(!items.length)return null;
+  const uq=[...new Map(items.map(x=>[x.n,x])).values()];
+  let rec=uq.length===1?SINGLE.find(r=>fits(uq,r.s)):null;
+  if(!rec)rec=MAIN.find(r=>fits(uq,r.s));
+  let kind=!rec?'dubious':rec.n==='Fairy Tonic'?'fairy':rec.n==='Elixir'?'elixir':rec.n==='Dubious Food'?'dubious':'dish';
+  const effs=[...new Set(items.filter(x=>x.e).map(x=>x.e))];
+  let e=effs.length===1?effs[0]:'';
+  const raw=items.reduce((s,x)=>s+x.hp,0);
+  const R={kind,base:rec?rec.n:'',e:'',items,raw,steps:[],warn:[],crit:0,outs:[],hp:0,dur:0,lv:0,max:0,yellow:0,wheels:0,pot:0};
+  const extract=items.some(x=>x.n==='Monster Extract');
+  if(effs.length>1&&kind!=='fairy')R.warn.push(effs.map(k=>EFF[k].en).join(' ve ')+' birbirini iptal etti. Farklı etkiler aynı tencerede kaybolur.');
+  if(kind==='elixir'&&!e){kind='dubious';if(effs.length<2)R.warn.push('İksirin tutması için böceğin bir etkisi olmalı.')}
+  R.kind=kind;
+  if(kind==='dubious'){
+    R.name='Dubious Food';R.hp=Math.max(raw,4);
+    if(!R.warn.length)R.warn.push(items.some(x=>x.t==='E'||x.t==='I')?'Canavar parçası ve böcek ancak ikisi birlikte olursa iksir yapar, yemeğe karışınca yemek bozulur.':'Bu karışım hiçbir tarife uymuyor, yemek bozulur.');
+    R.steps.push('Bozuk yemek ikiye katlamaz: ham can '+H(raw)+', en az 1 kalp → '+H(R.hp)+' kalp');return R;
+  }
+  if(kind==='fairy'){if(e||items.length>1)R.warn.push('Fairy Tonic\'te etki ve süre silinir, sadece can kalır.');e=''}
+  R.e=e;
+  const E=e?EFF[e]:null,timed=!!(E&&E.base);
+  let hp=raw*2;
+  R.steps.push('Can: 2 × '+H(raw)+' ham = '+H(raw*2)+' kalp');
+  let spHp=0,spT=0;uq.filter(x=>x.t==='X').forEach(x=>{spHp+=x.sh;spT+=x.st});
+  if(spHp){hp+=spHp;R.steps.push('Baharat bonusu: +'+H(spHp)+' kalp')}
+  if(rec.b){hp+=rec.b;R.steps.push('Tarif bonusu: '+(rec.b>0?'+':'−')+H(Math.abs(rec.b))+' kalp')}
+  if(!e&&hp<=0)hp=1;
+  if(hp>120){hp=120;R.steps.push('Üst sınır: 30 kalp')}
+  R.hp=hp;
+  const pot=items.filter(x=>x.e===e).reduce((s,x)=>s+x.p,0);R.pot=pot;
+  const nE=items.filter(x=>x.e===e).length;
+  if(timed){
+    const mon=items.filter(x=>x.t==='E').reduce((s,x)=>s+x.st,0);
+    let dur=items.length*30+nE*E.base+mon+spT;
+    let line='Süre: '+items.length+' malzeme × 0:30 + '+nE+' '+E.en+' × '+fmt(E.base)+(mon?' + canavar parçası '+fmt(mon):'')+(spT?' + baharat '+fmt(spT):'');
+    if(dur>1800){dur=1800;line+=' → üst sınır 30:00'}else line+=' = '+fmt(dur);
+    R.dur=dur;R.steps.push(line);
+    R.max=E.l3?3:2;R.lv=E.l3&&pot>=E.l3?3:pot>=E.l2?2:1;
+    R.steps.push(E.en+' gücü '+pot+' → Lv'+R.lv+' (Lv2 için '+E.l2+(E.l3?', Lv3 için '+E.l3:'')+')');
+  }
+  if(e==='hearty'){R.yellow=Math.min(Math.floor(pot/4),27);R.steps=['Hearty gücü '+pot/4+' → '+R.yellow+' sarı kalp (en fazla 25), bütün kalpler dolar']}
+  if(e==='energizing'){R.wheels=ENTAB[Math.min(pot,11)];R.steps.push('Energizing gücü '+pot+' → '+W(R.wheels)+' çember (en fazla 3)')}
+  if(e==='enduring'){const l=pot>=20?10:pot>=4?Math.floor(pot/2):pot>0?1:0;R.wheels=l/5;R.steps.push('Enduring gücü '+pot+' → '+W(R.wheels)+' ekstra çember (en fazla 2)')}
+  R.name=kind==='elixir'?E.en+' Elixir':kind==='dish'&&E?E.en+' '+rec.n:rec.n;
+  if(extract){R.warn.push('Monster Extract sonucu rastgele değiştirir: süre 1:00, 10:00 ya da 30:00 olur, can ya da etki ya düşer ya artar. Kritik olmaz. Burada gösterilen, extract hariç hesap.')}
+  else{
+    R.crit=Math.min(100,Math.max(0,...uq.map(x=>x.sr))+5*uq.length);
+    if(e!=='hearty'&&hp<120)R.outs.push('+3 kalp');
+    if(timed){R.outs.push('+5:00 süre');if(R.lv<R.max)R.outs.push('+1 seviye')}
+    if(e==='hearty')R.outs.push('+1 sarı kalp');
+    if(e==='energizing'||e==='enduring')R.outs.push('+⅖ çember');
+  }
+  return R;
+}
+const CK=new Map();
+function cookIds(ids){const k=ids.slice().sort((a,b)=>a-b).join(',');let R=CK.get(k);if(R===undefined){R=cook(ids.map(i=>IT[i]));CK.set(k,R)}return R}
+function resultLine(R){
+  if(!R)return '';
+  if(R.e==='hearty')return 'tam can + '+R.yellow+' sarı kalp';
+  let s=R.hp?H(R.hp)+' kalp':'can yok';
+  if(R.dur)s+=' · Lv'+R.lv+' · '+fmt(R.dur);
+  if(R.wheels)s+=' · '+W(R.wheels)+' çember';
+  return s;
+}
+const pref=x=>(x.e?1000:0)+x.hp*2+x.sh;
+const grp=ids=>[...new Set(ids)].map(i=>[i,ids.filter(j=>j===i).length]);
+
+/* the smallest part of the pot that still fills the player's hearts or stamina */
+function trimPot(ids,R){
+  if(ids.length<2||!R||R.kind==='dubious')return null;
+  const cap=ME.h*4,sf=ME.s5;let need,over;
+  if(!R.e&&R.hp>cap){need=S=>S.kind!=='dubious'&&S.e!=='hearty'&&S.hp>=cap;over=S=>S.hp-cap}
+  else if(R.e==='energizing'&&F5(R.wheels)>sf){need=S=>S.e==='energizing'&&F5(S.wheels)>=sf;over=S=>F5(S.wheels)-sf}
+  else return null;
+  let b=null;const n=ids.length;
+  for(let m=1;m<(1<<n)-1;m++){const sub=ids.filter((_,k)=>m>>k&1);const S=cookIds(sub);if(!S||!need(S))continue;const o=over(S);if(!b||sub.length<b.ids.length||(sub.length===b.ids.length&&o<b.o))b={ids:sub,S,o}}
+  return b;
+}
+
+/* planner: best dish per goal from what the player owns */
+const GOALS=[{k:'can',t:'En çok can'},{k:'hearty',t:'En çok sarı kalp'}].concat(['mighty','tough','hasty','sneaky','spicy','chilly','electro','fireproof','energizing','enduring'].map(k=>({k,t:EFF[k].tr+' ('+EFF[k].en+')'})));
+const BONUS=new Set(['Wildberry','Tabantha Wheat','Fresh Milk','Bird Egg','Cane Sugar','Courser Bee Honey','Apple','Goat Butter']);
+function candFor(g,owned){
+  const val=o=>o.x.hp*2+o.x.sh;
+  const by=(arr,f,n)=>arr.slice().sort((a,b)=>f(b)-f(a)||a.i-b.i).slice(0,n);
+  const mon=o=>o.x.t==='E',crit=o=>o.x.t==='I',ext=o=>o.x.n==='Monster Extract';
+  owned=owned.filter(o=>o.x.n!=='Fairy');
+  const neutral=owned.filter(o=>!o.x.e&&!mon(o)&&!ext(o));
+  let L;
+  if(g==='can'){const pool=owned.filter(o=>o.x.e!=='hearty'&&!mon(o)&&!crit(o)&&!ext(o));L=by(pool,val,8).concat(pool.filter(o=>BONUS.has(o.x.n)))}
+  else{
+    const eff=owned.filter(o=>o.x.e===g);
+    if(!eff.length)return [];
+    L=by(eff,o=>o.x.p*100+val(o),g==='hearty'?9:6);
+    if(g!=='hearty'){L=L.concat(by(neutral,val,2));if(EFF[g].base)L=L.concat(by(neutral.filter(o=>o.x.t==='X'),o=>o.x.st,1))}
+    if(L.some(crit))L=L.concat(by(owned.filter(mon),o=>o.x.st,g==='hearty'?1:2));
+  }
+  return [...new Map(L.map(o=>[o.i,o])).values()];
+}
+function score(g,R,n){
+  if(!R||R.kind==='dubious')return null;
+  const cap=ME.h*4,sf=ME.s5,hpc=Math.min(R.hp,cap);
+  if(g==='can')return R.e==='hearty'?null:[hpc,-n,-Math.max(0,R.hp-cap)];
+  if(g==='hearty')return R.e==='hearty'?[R.yellow,-n]:null;
+  if(R.e!==g)return null;
+  if(g==='energizing')return [Math.min(F5(R.wheels),sf),-n,-Math.max(0,F5(R.wheels)-sf),hpc];
+  if(g==='enduring')return [F5(R.wheels),hpc,-n];
+  return [R.lv,R.dur,hpc,-n];
+}
+const cmp=(a,b)=>{for(let k=0;k<a.length;k++){if(a[k]!==b[k])return a[k]-b[k]}return 0};
+function best(g,owned){
+  const C=candFor(g.k,owned).map(o=>({i:o.i,c:Math.min(o.c,5)}));
+  let bs=null,bi=null,bR=null;
+  const cur=[],cnt=C.map(()=>0);
+  const rec=start=>{
+    if(cur.length){const R=cookIds(cur),s=score(g.k,R,cur.length);if(s&&(!bs||cmp(s,bs)>0)){bs=s;bi=cur.slice();bR=R}}
+    if(cur.length===5)return;
+    for(let k=start;k<C.length;k++){if(cnt[k]>=C[k].c)continue;cnt[k]++;cur.push(C[k].i);rec(k);cur.pop();cnt[k]--}
+  };
+  rec(0);
+  return bi?{g,ids:bi,R:bR}:{g,none:true};
+}
+const sval=R=>R.e==='hearty'?1000+R.yellow:R.hp;
+function makeable(owned){
+  const pool=owned.slice().sort((a,b)=>pref(a.x)-pref(b.x)||b.c-a.c||a.i-b.i);
+  const out=[];
+  BOOK.forEach(r=>{
+    let found=null,tries=0;
+    if(r.only){for(const o of pool){if(slotOk(o.x,r.s[0])){const R=cookIds([o.i]);if(R&&R.base===r.n){found={ids:[o.i],R};break}}}}
+    else{
+      const used=[];
+      const go=k=>{
+        if(found||tries>80)return;
+        if(k===r.s.length){tries++;const R=cookIds(used);if(R&&R.kind!=='dubious'&&(r.n==='Elixir'?R.kind==='elixir':R.base===r.n))found={ids:used.slice(),R};return}
+        for(const o of pool){if(found||tries>80)return;if(used.includes(o.i)||!slotOk(o.x,r.s[k]))continue;used.push(o.i);go(k+1);used.pop()}
+      };
+      go(0);
+    }
+    if(found)out.push({r,...found});
+  });
+  return out.sort((a,b)=>sval(b.R)-sval(a.R));
+}
+
+const reqTxt=slots=>slots.map(s=>s.split('|').map(a=>a[0]==='#'?TAGTR[a.slice(1)]:a).join(' / ')).join(' + ');
+function sample(slots){
+  const used=new Set();
+  return slots.map(s=>{const c=IT.filter(x=>!used.has(x.i)&&slotOk(x,s));c.sort((a,b)=>pref(a)-pref(b)||a.i-b.i);const x=c[0];if(x)used.add(x.i);return x?x.i:null}).filter(i=>i!==null);
+}
+const BOOKMAP=new Map();
+MAIN.forEach(r=>{if(r.n!=='Dubious Food')BOOKMAP.set(r.n,{n:r.n,b:r.b,s:r.s})});
+SINGLE.forEach(r=>{if(!BOOKMAP.has(r.n))BOOKMAP.set(r.n,{n:r.n,b:r.b,s:r.s,only:true})});
+const BOOK=[...BOOKMAP.values()].sort((a,b)=>a.n.localeCompare(b.n));
+BOOK.forEach(r=>{
+  r.req=r.n==='Elixir'?'herhangi bir böcek + herhangi bir canavar parçası (aynı etkiden)':r.n==='Fairy Tonic'?'Fairy (tek başına ya da böcek, canavar parçası ile)':reqTxt(r.s)+(r.only?' (tek başına)':'');
+  r.ids=sample(r.s);
+});
+/*DOM*/
+
+const HP='M12 22C6 17.9 1.4 13.9 1.4 8.6 1.4 5.4 3.8 3 6.8 3c2.1 0 3.9 1.2 5.2 3.1C13.3 4.2 15.1 3 17.2 3c3 0 5.4 2.4 5.4 5.6 0 5.3-4.6 9.3-10.6 13.4z';
+let hid=0;
+function heart(q,col){
+  const id='hc'+(hid++);
+  const fill=q>=4?'<rect width="24" height="24"/>':[[12,0],[12,12],[0,12],[0,0]].slice(0,q).map(([x,y])=>'<rect x="'+x+'" y="'+y+'" width="12" height="12"/>').join('');
+  return '<svg viewBox="0 0 24 24" aria-hidden="true"><defs><clipPath id="'+id+'"><path d="'+HP+'"/></clipPath></defs><path d="'+HP+'" fill="var(--empty)"/><g clip-path="url(#'+id+')" fill="'+col+'">'+fill+'</g></svg>';
+}
+function heartsCap(hp,cap,yellow){
+  let s='';for(let k=0;k*4<cap;k++)s+=heart(Math.max(0,Math.min(4,hp-k*4)),'var(--heart)');
+  for(let k=0;k<yellow;k++)s+=heart(4,'var(--gold)');
+  return '<div class="hearts">'+s+'</div>';
+}
+function rings(fill,cap,col){
+  const n=Math.max(1,Math.ceil(cap/5));let out='';
+  for(let r=0;r<n;r++){let s='';const av=Math.min(5,cap-r*5);for(let k=0;k<av;k++){const a0=(-90+k*72+4)*Math.PI/180,a1=(-90+(k+1)*72-4)*Math.PI/180;
+    s+='<path d="M'+(20+15*Math.cos(a0)).toFixed(2)+' '+(20+15*Math.sin(a0)).toFixed(2)+'A15 15 0 0 1 '+(20+15*Math.cos(a1)).toFixed(2)+' '+(20+15*Math.sin(a1)).toFixed(2)+'" stroke="'+(r*5+k<fill?col:'#ffffff2a')+'" stroke-width="7" fill="none"/>'}
+    out+='<svg viewBox="0 0 40 40" width="46" height="46" aria-hidden="true">'+s+'</svg>'}
+  return '<div class="rings">'+out+'</div>';
+}
+const icp=(p,s)=>'<span class="ic" style="--x:'+(p%14)+';--y:'+Math.floor(p/14)+(s?';--s:'+s+'px':'')+'" aria-hidden="true"></span>';const ic=(i,s)=>icp(SPR[IT[i].n],s);
+const iconRow=(ids,s)=>'<div class="icons">'+grp(ids).map(([i,c])=>'<span class="w" title="'+esc(IT[i].n)+'">'+ic(i,s)+(c>1?'<b>'+c+'</b>':'')+'</span>').join('')+'</div>';
+const names=ids=>grp(ids).map(([i,c])=>(c>1?c+' × ':'')+esc(IT[i].n)).join(' + ');
+const $=id=>document.getElementById(id);
+const ls={get(k){try{return JSON.parse(localStorage.getItem(k))}catch(_){return null}},set(k,v){try{localStorage.setItem(k,JSON.stringify(v))}catch(_){}}};
+
+{const m=ls.get('botw-me');if(m&&m.h>=3&&m.h<=30)ME.h=m.h|0;if(m&&m.s5>=5&&m.s5<=15)ME.s5=m.s5|0}
+$('meh').innerHTML=Array.from({length:28},(_,k)=>k+3).map(h=>'<option value="'+h+'"'+(h===ME.h?' selected':'')+'>'+h+' kalp</option>').join('');
+$('mes').innerHTML=Array.from({length:11},(_,k)=>k+5).map(f=>'<option value="'+f+'"'+(f===ME.s5?' selected':'')+'>'+W(f/5)+' çember</option>').join('');
+const meChange=()=>{ME.h=+$('meh').value;ME.s5=+$('mes').value;ls.set('botw-me',ME);drawPot();plan()};
+$('meh').addEventListener('change',meChange);$('mes').addEventListener('change',meChange);
+
+let pot=[],hist=[];
+const SAVE='botw-pot-v2';
+{const s=ls.get(SAVE);pot=Array.isArray(s)?s.filter(n=>BY[n]).slice(0,5).map(n=>BY[n].i):['Mighty Bananas','Mighty Bananas','Mighty Bananas','Raw Gourmet Meat','Raw Gourmet Meat'].map(n=>BY[n].i)}
+const save=()=>ls.set(SAVE,pot.map(i=>IT[i].n));
+function setPot(next){hist.push(pot.slice());if(hist.length>50)hist.shift();pot=next;save();draw()}
+function nudge(){const p=$('pot');p.classList.remove('nud');void p.offsetWidth;p.classList.add('nud')}
+function add(i){if(pot.length>=5){nudge();return}setPot(pot.concat(i))}
+function removeOne(i){const k=pot.lastIndexOf(i);if(k<0)return;const n=pot.slice();n.splice(k,1);setPot(n)}
+const toPot=()=>{if(matchMedia('(max-width:759px)').matches)$('pot').scrollIntoView({behavior:'smooth',block:'start'})};
+
+let TRIM=null;
+function drawPot(){
+  const R=cook(pot.map(i=>IT[i]));
+  const cap=ME.h*4;
+  $('dots').innerHTML=[0,1,2,3,4].map(k=>'<i class="'+(k<pot.length?'on':'')+'"></i>').join('');
+  $('plbl').textContent=pot.length+'/5 malzeme';
+  $('undo').disabled=!hist.length;$('clear').disabled=!pot.length;
+  $('chips').innerHTML=pot.length?grp(pot).map(([i,c])=>{const x=IT[i];return '<button class="chip" data-i="'+i+'" style="--c:'+(x.e?EFF[x.e].c:'#7d9a88')+'" aria-label="'+esc(x.n)+' bir tane çıkar">'+ic(i)+esc(x.n)+(c>1?' <b>×'+c+'</b>':'')+'<span class="x" aria-hidden="true">×</span></button>'}).join(''):'<p class="hint">Tencere boş. Yandaki listeden malzemeye dokun, en fazla 5 tane.</p>';
+  if(!R){$('out').innerHTML='<h2 class="dish">Tencere boş</h2><p class="kind">Bir malzeme ekleyince sonuç burada çıkar.</p>';bar(null);return}
+  const KT={dish:'Yemek',elixir:'İksir',fairy:'Peri toniği',dubious:'Bozuk yemek'};
+  let h='<h2 class="dish">'+esc(R.name)+'</h2><p class="kind">'+KT[R.kind]+'</p>';
+  if(R.e==='hearty')h+=heartsCap(cap,cap,R.yellow)+'<div class="hprow"><span class="big">'+R.yellow+'</span><span>sarı kalp · '+ME.h+' kalbin tamamen dolar</span></div>';
+  else if(R.hp>0)h+=heartsCap(R.hp,cap,0)+'<div class="hprow"><span class="big">'+H(R.hp)+'</span><span>kalp can · '+(R.hp>cap?ME.h+' kalbin dolar, '+H(R.hp-cap)+' kalp boşa gider':R.hp===cap?ME.h+' kalbin tam dolar':'dolması için '+H(cap-R.hp)+' kalp daha')+'</span></div>';
+  else h+='<div class="hprow"><span class="big">0</span><span>can vermez, sadece etki</span></div>';
+  if(R.e){const E=EFF[R.e];
+    h+='<div class="eff" style="--c:'+E.c+'"><div class="epill"><i></i>'+E.en+' · '+E.tr+'</div>';
+    if(R.dur)h+='<div class="pips">'+Array.from({length:R.max},(_,k)=>'<i class="'+(k<R.lv?'on':'')+'"></i>').join('')+'<span>Lv'+R.lv+(R.lv===R.max?' (en yüksek)':'')+'</span></div><div class="edesc">'+E.d+'</div><div class="dur"><span class="big">'+fmt(R.dur)+'</span><small>süre</small></div>';
+    else if(R.e==='energizing'){const f=F5(R.wheels),sf=ME.s5;h+=rings(f,sf,E.c)+'<div class="edesc">'+W(R.wheels)+' çember doldurur · '+(f>sf?W(sf/5)+' çemberin dolar, '+W((f-sf)/5)+' boşa gider':f===sf?'staminan tam dolar':'dolması için '+W((sf-f)/5)+' çember daha')+'</div>'}
+    else if(R.e==='enduring'){const f=F5(R.wheels);h+=rings(f,f,E.c)+'<div class="edesc">'+W(R.wheels)+' çember · '+E.d.toLowerCase()+'</div>'}
+    else h+='<div class="edesc">'+E.d+'</div>';
+    h+='</div>'}
+  R.warn.forEach(w=>{h+='<div class="warn">'+esc(w)+'</div>'});
+  TRIM=trimPot(pot,R);
+  if(TRIM)h+='<div class="trim"><span><b>Gereğinden fazla malzeme var.</b> '+(R.e==='energizing'?'Staminanı':'Kalbini')+' doldurmak için bu kadarı yeter:</span>'+iconRow(TRIM.ids,36)+'<span>'+names(TRIM.ids)+' → '+resultLine(TRIM.S)+'</span><button class="go" id="trimgo">Fazlasını çıkar</button></div>';
+  if(R.crit)h+='<p class="crit">Kritik pişirme şansı <b>%'+R.crit+'</b>'+(R.outs.length?' · olursa rastgele '+R.outs.join(', ya da '):'')+'</p>';
+  h+='<details class="sum"><summary>Nasıl hesaplandı</summary><ol>'+R.steps.map(s=>'<li>'+esc(s)+'</li>').join('')+'</ol></details>';
+  $('out').innerHTML=h;bar(R);
+}
+$('out').addEventListener('click',ev=>{if(ev.target.closest('#trimgo')&&TRIM)setPot(TRIM.ids.slice())});
+function bar(R){$('bn').textContent=R?R.name:'Tencere boş';$('bv').textContent=R?resultLine(R)+' · '+pot.length+'/5':'0/5'}
+
+const st={cat:'all',q:'',ef:'',so:'kat'};
+function meta(x){
+  if(x.n==='Fairy')return ['+10 kalp · tek başına 7',''];
+  if(x.n==='Monster Extract')return ['Sonucu rastgele değiştirir',''];
+  if(x.t==='E')return ['İksire süre +'+fmt(30+x.st),x.sr?'<span class="tm">%'+x.sr+' kritik</span>':''];
+  const q=x.hp*2+x.sh;
+  const a=x.e==='hearty'?'tam can + '+x.p/4+' sarı kalp':q?'+'+H(q)+' kalp':x.t==='I'?'iksir malzemesi':'can vermez';
+  if(x.e)return [a,'<span class="te" style="--c:'+EFF[x.e].c+'"><i></i>'+EFF[x.e].en+(x.e==='hearty'?'':' '+x.p)+'</span>'];
+  const ex=[x.sr?'%'+x.sr+' kritik':'',x.t==='X'&&x.st?'süre +'+fmt(x.st):''].filter(Boolean).join(' · ');
+  return [a,ex?'<span class="tm">'+ex+'</span>':''];
+}
+function filterItems(cat,q){
+  const ql=q.trim().toLowerCase();
+  return IT.filter(x=>ql?x.n.toLowerCase().includes(ql)||(x.e&&(EFF[x.e].en+' '+EFF[x.e].tr).toLowerCase().includes(ql)):cat==='all'||x.u===cat);
+}
+function drawGrid(){
+  let L=filterItems(st.cat,st.q).filter(x=>!st.ef||(st.ef==='none'?!x.e:x.e===st.ef));
+  const cv=x=>x.e==='hearty'?200+x.p:x.hp*2+x.sh;
+  if(st.so==='can')L.sort((a,b)=>cv(b)-cv(a));
+  if(st.so==='guc')L.sort((a,b)=>b.p-a.p);
+  if(st.so==='ad')L.sort((a,b)=>a.n.localeCompare(b.n));
+  const cnt={};pot.forEach(i=>{cnt[i]=(cnt[i]||0)+1});
+  $('grid').classList.toggle('full',pot.length>=5);
+  $('grid').innerHTML=L.length?L.map(x=>{const[a,b]=meta(x);return '<button class="tile'+(cnt[x.i]?' in':'')+'" data-i="'+x.i+'">'+ic(x.i)+'<span class="tx"><span class="tn">'+esc(x.n)+'</span><span class="tm">'+a+'</span>'+b+'</span>'+(cnt[x.i]?'<span class="cnt">×'+cnt[x.i]+'</span>':'')+'</button>'}).join(''):'<p class="none">Bu filtreyle malzeme yok.</p>';
+}
+function draw(){drawPot();drawGrid()}
+const catHtml=sel=>CATS.map(([k,l])=>'<button data-c="'+k+'" aria-pressed="'+(k===sel)+'">'+l+'</button>').join('');
+
+$('cats').innerHTML=catHtml('all');
+$('ef').innerHTML='<option value="">Tüm etkiler</option><option value="none">Etkisiz (sadece can)</option>'+Object.entries(EFF).map(([k,E])=>'<option value="'+k+'">'+E.en+' · '+E.tr+'</option>').join('');
+$('cats').addEventListener('click',ev=>{const b=ev.target.closest('button');if(!b)return;st.cat=b.dataset.c;[...$('cats').children].forEach(c=>c.setAttribute('aria-pressed',c===b));if(st.q){st.q='';$('q').value=''}drawGrid()});
+$('q').addEventListener('input',ev=>{st.q=ev.target.value;drawGrid()});
+$('ef').addEventListener('change',ev=>{st.ef=ev.target.value;drawGrid()});
+$('so').addEventListener('change',ev=>{st.so=ev.target.value;drawGrid()});
+$('grid').addEventListener('click',ev=>{const b=ev.target.closest('.tile');if(b)add(+b.dataset.i)});
+$('chips').addEventListener('click',ev=>{const b=ev.target.closest('.chip');if(b)removeOne(+b.dataset.i)});
+$('undo').addEventListener('click',()=>{if(!hist.length)return;pot=hist.pop();save();draw()});
+$('clear').addEventListener('click',()=>{if(pot.length)setPot([])});
+$('up').addEventListener('click',()=>$('pot').scrollIntoView({behavior:'smooth',block:'start'}));
+
+const TABS=['mal','env','haz','kit'];
+function tab(t){TABS.forEach(u=>{$('t-'+u).setAttribute('aria-selected',u===t);$('p-'+u).hidden=u!==t});ls.set('botw-tab',t)}
+TABS.forEach(t=>$('t-'+t).addEventListener('click',()=>tab(t)));
+
+/* Elimdekiler */
+const INVK='botw-inv-v1';
+const EXAMPLE={'Apple':5,'Wildberry':3,'Mighty Bananas':4,'Spicy Pepper':5,'Hylian Shroom':4,'Stamella Shroom':3,'Endura Shroom':1,'Chillshroom':3,'Razorshroom':2,'Ironshroom':2,'Rushroom':2,'Silent Shroom':2,'Hearty Truffle':1,'Hyrule Herb':3,'Hearty Radish':2,'Raw Meat':5,'Raw Prime Meat':2,'Raw Bird Drumstick':3,'Hyrule Bass':2,'Hylian Rice':3,'Rock Salt':5,'Bird Egg':2,'Fresh Milk':1,'Tabantha Wheat':2,'Cane Sugar':1,'Goat Butter':1,'Hightail Lizard':2,'Cold Darner':1,'Fireproof Lizard':2,'Bokoblin Horn':5,'Bokoblin Guts':2,'Chuchu Jelly':3,'Fairy':1};
+let inv={},invEx=false;
+{const s=ls.get(INVK);const src=s&&s.items?s.items:EXAMPLE;invEx=s?!!s.ex:true;Object.entries(src).forEach(([n,c])=>{if(BY[n]&&c>0)inv[BY[n].i]=Math.min(5,c|0)})}
+const saveInv=()=>ls.set(INVK,{ex:invEx,items:Object.fromEntries(Object.entries(inv).map(([i,c])=>[IT[i].n,c]))});
+const est={cat:'all',q:'',mine:false};
+const ownedList=()=>Object.entries(inv).filter(([,c])=>c>0).map(([i,c])=>({x:IT[+i],i:+i,c}));
+function drawEnvHead(){
+  const o=ownedList();
+  $('envn').innerHTML=o.length?'<b>'+o.length+' çeşit malzeme işaretli</b>'+(invEx?'<br><span class="note">Bu bir örnek çanta. Kamerayla tara\'ya basıp oyundaki envanterini okut ya da Temizle\'ye basıp elle gir.</span>':''):'<b>Çantan boş.</b> <span class="note">Kamerayla tara\'ya bas ya da aşağıdan elindekileri işaretle. 5 ve üstü aynı sayılır, tencere en fazla 5 alır.</span>';
+  $('envclr').classList.toggle('hot',invEx);$('envclr').disabled=!o.length;
+}
+function drawEnvGrid(){
+  let L=filterItems(est.cat,est.q);if(est.mine)L=L.filter(x=>inv[x.i]);
+  $('egrid').innerHTML=L.length?L.map(x=>{const c=inv[x.i]||0;const[a]=meta(x);return '<div class="itile'+(c?' on':'')+'" data-i="'+x.i+'">'+ic(x.i,40)+'<span class="tx"><span class="tn">'+esc(x.n)+'</span><span class="tm">'+a+'</span></span><span class="step"><button data-d="-1" aria-label="'+esc(x.n)+' azalt"'+(c?'':' disabled')+'>−</button><span class="'+(c?'':'z')+'">'+(c>=5?'5+':c)+'</span><button data-d="1" aria-label="'+esc(x.n)+' artır"'+(c>=5?' disabled':'')+'>+</button></span></div>'}).join(''):'<p class="none">'+(est.mine?'Bu kategoride işaretli malzeme yok.':'Bu aramayla malzeme yok.')+'</p>';
+}
+function setInv(i,c){c=Math.max(0,Math.min(5,c));if(c)inv[i]=c;else delete inv[i];saveInv();drawEnvHead();drawEnvGrid();plan()}
+$('ecats').innerHTML=catHtml('all');
+$('ecats').addEventListener('click',ev=>{const b=ev.target.closest('button');if(!b)return;est.cat=b.dataset.c;[...$('ecats').children].forEach(c=>c.setAttribute('aria-pressed',c===b));if(est.q){est.q='';$('eq').value=''}drawEnvGrid()});
+$('eq').addEventListener('input',ev=>{est.q=ev.target.value;drawEnvGrid()});
+$('emine').addEventListener('change',ev=>{est.mine=ev.target.checked;drawEnvGrid()});
+$('egrid').addEventListener('click',ev=>{const t=ev.target.closest('.itile');if(!t)return;const i=+t.dataset.i,b=ev.target.closest('button');if(b&&b.disabled)return;setInv(i,(inv[i]||0)+(b?+b.dataset.d:1))});
+$('envclr').addEventListener('click',()=>{inv={};invEx=false;saveInv();drawEnvHead();drawEnvGrid();plan()});
+
+const card=(o,k,attr,title,extra)=>'<div class="card" style="--c:'+(o.R.e?EFF[o.R.e].c:'var(--heart)')+'"><h3>'+title+'</h3>'+iconRow(o.ids)+'<span class="ing">'+names(o.ids)+'</span><span class="res">'+esc(o.R.name)+' · '+resultLine(o.R)+'</span>'+(extra?'<p>'+extra+'</p>':'')+'<button class="go" '+attr+'="'+k+'">Tencereye koy</button></div>';
+let GRES=[],MK=[],pTimer=null,pTok=0;
+function plan(){
+  clearTimeout(pTimer);const tok=++pTok;const owned=ownedList();const res=[];let k=0;
+  const step=()=>{if(tok!==pTok)return;if(k<GOALS.length){res.push(best(GOALS[k],owned));k++;pTimer=setTimeout(step,0)}else{GRES=res;MK=makeable(owned);drawPlan(owned)}};
+  pTimer=setTimeout(step,80);
+}
+function drawPlan(owned){
+  const cap=ME.h*4,sf=ME.s5;
+  const ok=GRES.filter(r=>!r.none);
+  $('gcards').innerHTML=ok.length?ok.map(r=>{let t=r.g.t,extra='';
+    if(r.g.k==='can'){if(r.R.hp>=cap){t='Kalbini doldur';extra=ME.h+' kalbini en az malzemeyle tam doldurur.'}else extra='Elindekilerle en fazla bu kadar, '+ME.h+' kalbin var.'}
+    if(r.g.k==='energizing'&&F5(r.R.wheels)>=sf){t='Staminanı doldur';extra=W(sf/5)+' çemberini en az malzemeyle doldurur.'}
+    if(r.g.k==='hearty'){const ch=owned.filter(o=>o.x.e==='hearty'&&o.x.t!=='I').sort((a,b)=>a.x.p-b.x.p)[0];if(ch&&r.ids.length>1)extra='Sadece canını doldurmak istersen 1 × '+esc(ch.x.n)+' yeter.'}
+    return card(r,GRES.indexOf(r),'data-g',t,extra)}).join(''):'<p class="none">'+(owned.length?'Bu malzemelerle tutan bir yemek çıkmadı.':'Önce aşağıdan elindeki malzemeleri işaretle.')+'</p>';
+  const miss=GRES.filter(r=>r.none&&r.g.k!=='can');
+  $('miss').innerHTML=owned.length&&miss.length?'Malzemen olmadığı için çıkmayanlar: '+miss.map(r=>{const e=r.g.k;const src=IT.filter(x=>x.e===e&&x.t!=='I').slice(0,2).map(x=>x.n);const s=src.length?src:IT.filter(x=>x.e===e).slice(0,2).map(x=>x.n);return '<b>'+EFF[e].tr+'</b> ('+esc(s.join(', '))+(src.length?'':' + canavar parçası')+')'}).join(', '):'';
+  $('mksum').textContent='Tarif kitabından yapabildiklerin ('+MK.length+')';
+  $('mklist').innerHTML=MK.length?MK.map((m,k)=>'<div class="rrow"><b>'+esc(m.R.name)+'</b>'+iconRow(m.ids,30)+'<span class="req">'+names(m.ids)+' · '+resultLine(m.R)+'</span><button class="go" data-m="'+k+'">Tencereye koy</button></div>').join(''):'<p class="none">Henüz tarif yok.</p>';
+}
+$('gcards').addEventListener('click',ev=>{const b=ev.target.closest('.go');if(!b)return;setPot(GRES[+b.dataset.g].ids.slice());toPot()});
+$('mklist').addEventListener('click',ev=>{const b=ev.target.closest('.go');if(!b)return;setPot(MK[+b.dataset.m].ids.slice());toPot()});
+
+/* Hazır */
+const PRESETS=[
+ ['En çok can','Beş Raw Gourmet Meat 30 kalbe, yani en üst sınıra çıkar.',[['Raw Gourmet Meat',5]]],
+ ['Tam can + 25 sarı kalp','Oyundaki en büyük sarı kalp yemeği.',[['Big Hearty Radish',5]]],
+ ['Ucuz tam iyileşme','Tek bir hearty malzeme bile bütün kalpleri doldurur.',[['Hearty Truffle',1]]],
+ ['Saldırı Lv3','Kolay bulunan en güçlü saldırı yemeği.',[['Mighty Bananas',5]]],
+ ['Savunma Lv3','',[['Ironshroom',5]]],
+ ['Hız Lv3','',[['Fleet-Lotus Seeds',4],['Swift Carrot',1]]],
+ ['Gizlilik Lv3','',[['Silent Shroom',5]]],
+ ['Soğuğa karşı','Hebra ve karlı dağlar için.',[['Spicy Pepper',3],['Sunshroom',2]]],
+ ['Sıcağa karşı','Gerudo çölünde gündüz için.',[['Hydromelon',3],['Chillshroom',2]]],
+ ['Elektriğe karşı Lv3','',[['Voltfruit',2],['Zapshroom',3]]],
+ ['Ateşe karşı','Fireproof sadece iksirle olur. Death Mountain için.',[['Fireproof Lizard',4],['Bokoblin Horn',1]]],
+ ['Stamina doldur','Uzun tırmanışlarda hayat kurtarır.',[['Staminoka Bass',3]]],
+ ['Ekstra stamina','En fazla ekstra stamina, üstüne 20 kalp.',[['Endura Carrot',5]]],
+ ['Peri toniği','',[['Fairy',1]]],
+ ['Wildberry Crepe','Tarif bonusuyla 10 kalp.',[['Tabantha Wheat',1],['Fresh Milk',1],['Bird Egg',1],['Cane Sugar',1],['Wildberry',1]]]
+].map(([t,d,g])=>{const ids=g.flatMap(([n,c])=>Array(c).fill(BY[n].i));return{t,d,ids,R:cook(ids.map(i=>IT[i]))}});
+$('cards').innerHTML=PRESETS.map((p,k)=>card(p,k,'data-p',p.t,p.d)).join('');
+$('cards').addEventListener('click',ev=>{const b=ev.target.closest('.go');if(!b)return;setPot(PRESETS[+b.dataset.p].ids.slice());toPot()});
+
+/* Tarifler */
+function drawBook(){
+  const q=$('rq').value.trim().toLowerCase();
+  const L=BOOK.filter(r=>!q||(r.n+' '+r.req).toLowerCase().includes(q));
+  $('rlist').innerHTML=L.length?L.map(r=>'<div class="rrow"><b>'+esc(r.n)+'</b>'+iconRow(r.ids,30)+'<span class="req">'+esc(r.req)+(r.b>0?' <span class="bon">tarif bonusu +'+H(r.b)+' kalp</span>':'')+'</span><button class="go" data-r="'+BOOK.indexOf(r)+'">Dene</button></div>').join(''):'<p class="none">Bu aramayla tarif yok.</p>';
+}
+$('rq').addEventListener('input',drawBook);
+$('rlist').addEventListener('click',ev=>{const b=ev.target.closest('.go');if(!b)return;setPot(BOOK[+b.dataset.r].ids.slice());toPot()});
+
+$('etab').innerHTML='<thead><tr><th>Etki</th><th>Ne yapar</th><th class="n">Lv2 için güç</th><th class="n">Lv3 için güç</th><th class="n">Malzeme başı süre</th></tr></thead><tbody>'+Object.values(EFF).filter(E=>E.base).map(E=>'<tr style="--c:'+E.c+'"><td><span class="sw"></span>'+E.en+'</td><td>'+E.tr+'</td><td class="n">'+E.l2+'</td><td class="n">'+(E.l3||'yok')+'</td><td class="n">'+fmt(30+E.base)+'</td></tr>').join('')+'</tbody>';
+
+const io=new IntersectionObserver(en=>{en.forEach(x=>$('bar').classList.toggle('show',!x.isIntersecting&&x.boundingClientRect.top<0))});
+io.observe($('out'));
+/* Kamerayla tarama: canlı kameradan envanter sayfalarını okuyup çantaya ekler */
+const SC=window.SCAN;
+const DIGITS=[{"d":1,"f":[1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,0,1,1,1,1,1,1,0,1,1,1,1,1,1,0,1,1,1,1,1,1,0,1,1,1,1,1,1,1,1,1,1,1,1,1,0.67,1,1,1,1,1,0],"ar":0.28},{"d":7,"f":[0,0,0,0,0,0,0,1,1,1,1,1,1,1,1,1,1,1,1,1,1,0,0,0.5,0.25,1,1,1,0,0,0,0.25,1,1,1,0,0,0,0.83,1,1,1,0,0,1,1,1,1,0.5,0,0.5,1,1,1,1,0,0,0.67,1,1,1,0.33,0,0,1,1,1,1,0,0,0.33,1,1,1,0.67,0,0],"ar":0.423},{"d":9,"f":[0,0,0.33,0.5,0.5,0.33,0,0,0.5,1,1,1,1,0.17,0,1,1,1,1,1,0.67,0.5,1,0.89,0.33,0.22,1,1,0.5,1,0.67,0,0,1,1,0.5,1,0.83,0.25,0.67,1,1,0.25,1,1,1,1,1,1,0,0.33,1,1,1,1,1,0.5,1,0.17,0,0.5,1,0.67,1,1,1,1,1,1,0.33,0.17,1,1,1,1,0.67,0],"ar":0.76},{"d":1,"f":[1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,0,1,1,1,1,1,1,1,1,1,1,1,1,0.5,1,1,1,1,1,1,0.33,1,1,1,1,1,1,0,1,1,1,1,1,1,0,0.67,1,1,1,1,0.67,0],"ar":0.28},{"d":2,"f":[0,0,0.25,0.67,1,0.83,0.17,0,0.33,1,1,1,1,0.83,0,0.89,1,1,0.67,1,1,0.5,1,1,0.17,0,1,1,0,0.67,0.5,0,0.75,1,1,0,0,0.5,0.78,1,1,0.67,0,0.5,1,1,1,0.67,0,0.25,1,1,1,0.5,0,0,0.83,1,1,0.44,0.67,0.67,0.22,1,1,1,1,1,1,1,0.83,1,1,1,1,1,0.56],"ar":0.692},{"d":1,"f":[0,0,0,0.5,0.5,1,0.5,0.5,0.5,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,0.5,0.5,1,1,1,1,1,0.5,0.5,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,0.67,0.67,1,1,1,1,0.33],"ar":0.24},{"d":2,"f":[0,0,0,0.5,0.5,0.5,0,0,0,0.83,1,1,1,0.83,0,0.5,1,1,1,1,1,0,0.83,1,0.83,0.22,1,1,0,0.25,0.83,0,0.17,1,1,0,0,0,0.5,1,1,1,0,0,0.5,1,1,1,0.5,0,0.5,1,1,0.67,0.17,0,0.25,1,1,0.5,0.17,0,0,0.5,1,1,1,1,1,0.83,0.83,1,1,1,1,1,0.89],"ar":0.68},{"d":8,"f":[0,0,0.17,0.83,1,0.67,0.67,0,0.17,1,1,1,1,0.5,0,0.67,1,1,1,1,1,0,1,1,0.56,0.33,1,1,0,0.83,1,1,1,1,1,0,0.67,1,1,1,1,0.67,0.25,1,1,1,1,1,0.83,0.67,1,0.89,0.44,0.56,1,1,1,1,0.83,0,0.5,1,1,0.75,1,1,1,1,1,0.83,0.17,0.89,1,1,1,0.89,0.22],"ar":0.8},{"d":4,"f":[0,0,0,0,0.5,0.83,0.33,0,0,0,0.17,1,1,0.17,0,0,0,0.89,1,1,0.33,0,0,0.5,1,1,1,0.17,0,0.17,1,1,1,1,0,0,0.67,1,0.78,1,1,0,0.5,1,1,0.83,1,1,0.5,1,1,1,1,1,1,1,0.5,1,1,0.89,1,1,0.56,0,0,0,0.33,1,0.67,0,0,0,0,0.11,0.67,0.22,0],"ar":0.769},{"d":1,"f":[0,0,0,0.5,0.5,1,0.5,0.5,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,0.5,1,1,1,1,1,1,0,1,1,1,1,1,1,0,1,1,1,1,1,0.75,0,1,1,1,1,1,0.5,0,1,1,1,1,1,0.5,1,1,1,1,1,1,0.5,0.33,1,1,1,1,1,0],"ar":0.32},{"d":2,"f":[0,0,0,0.25,0.5,0.17,0,0,0,0.83,1,1,1,0.5,0,0.56,1,1,1,1,1,0,1,1,0.75,0,1,1,0,0.67,1,0,0.17,1,1,0,0,0.22,0.5,0.89,1,1,0,0,0.83,1,1,1,0.33,0,0.5,1,1,0.83,0.33,0,0.17,1,1,0.5,0.11,0,0,0.75,1,1,1,1,1,0.5,0.67,1,1,1,1,1,0.89],"ar":0.731},{"d":6,"f":[0,0,0,0.5,0.5,0.17,0,0,0,0.83,1,1,1,0.5,0,0.67,1,1,1,1,0.89,0,1,1,0.5,0,0.83,0.83,0.5,1,1,1,1,0.67,0,1,1,1,1,1,1,0.44,1,1,1,0.5,0.67,1,0.83,1,1,0.67,0,0.33,1,0.83,1,1,0.78,0,0.67,1,0.67,0.5,1,1,1,1,1,0.5,0,0.67,1,1,1,0.67,0],"ar":0.731},{"d":8,"f":[0,0,0,0,0.17,1,1,0,0,0.56,0.67,1,1,1,0,0.67,1,1,1,1,1,0,1,1,0.5,0.33,1,1,0,1,1,0.75,0.67,1,1,0,0.89,1,1,1,1,0.67,0.5,1,1,1,1,1,0.83,1,1,0.78,0.17,0.33,1,1,1,1,0.67,0,0.5,1,1,0.67,1,1,1,1,1,0.56,0,0.44,0.89,1,0.89,0.56,0],"ar":0.679},{"d":1,"f":[0,0,0,0,0.5,0.5,0,0,0.5,0.5,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,0,0.5,1,1,1,1,1,0,1,1,1,1,1,0.75,0,1,1,1,1,1,0.5,0,1,1,1,1,1,0.5,0,1,1,1,1,1,0.5,0.67,1,1,1,1,1,0],"ar":0.36},{"d":3,"f":[0,0,0,0.5,0.5,0.5,0,0,0.17,0.83,1,1,1,0.83,0,0.56,1,1,0.67,1,1,0,0.5,1,0.25,0,1,1,0,0,0,0.5,0.67,1,1,0,0,0.67,1,1,1,0.56,0,0,0.33,1,1,1,0.83,0,0,0,0,0.17,1,1,0.5,1,0.33,0,0.44,1,1,0.5,1,1,1,1,1,0.67,0,0.56,1,1,1,0.78,0.11],"ar":0.731},{"d":1,"f":[0,0,0,0.5,0.5,0.5,0.25,0.5,0.5,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,0,1,1,1,1,1,1,0.5,1,1,1,1,1,0.75,1,1,1,1,1,1,0.5,1,1,1,1,1,1,0.5,1,1,1,1,1,1,0.25,1,1,1,1,1,1,0],"ar":0.32},{"d":2,"f":[0,0.17,0.5,1,1,1,0.83,0,0,0.67,1,1,1,1,0,0.56,1,1,1,1,1,0,1,1,0.75,0,1,1,0,0.5,1,0,0.17,1,1,0,0,0.11,0.5,0.89,1,0.78,0,0,0.83,1,1,1,0,0,0.67,1,1,0.83,0.17,0,0.33,1,1,0.83,0.33,0.33,0.11,0.75,1,1,1,1,1,0.83,0.83,1,1,1,1,1,0.67],"ar":0.731},{"d":6,"f":[0,0,0,0.5,0.5,0.33,0,0,0.17,1,1,1,1,0.5,0,0.67,1,1,1,1,0.89,0.5,1,1,1,1,1,0.83,0.75,1,1,1,1,0.83,0,1,1,1,1,1,1,0.56,1,1,1,0.75,0.83,1,1,1,1,0.67,0,0.33,1,1,1,1,0.78,0.33,0.89,1,0.78,0.75,1,1,1,1,1,0.33,0.17,0.78,1,1,1,0.67,0],"ar":0.731},{"d":3,"f":[0,0,0.33,0.75,1,0.67,0,0,0.33,1,1,1,1,0.5,0,0.83,1,1,1,1,1,0,0.67,0.89,0.5,0.78,1,1,0,0,0.67,1,1,1,0.83,0,0,1,1,1,1,0.33,0,0,0.83,1,1,1,0.67,0.17,0.33,0.22,0.33,0.56,1,1,1,1,0.83,0.5,0.83,1,0.67,1,1,1,1,1,1,0.5,0.17,0.89,1,1,1,0.78,0],"ar":0.76},{"d":1,"f":[0,0,0,0,0,0.5,0.25,0,0,0.5,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,0,1,1,1,1,1,1,0,1,1,1,1,1,1,0,1,1,1,1,1,1,0.67,1,1,1,1,1,0.83,1,1,1,1,1,1,0.5,0.33,0.67,1,1,1,0.67,0.33],"ar":0.308},{"d":2,"f":[0,0,0,0.25,0.5,0.17,0,0,0.17,0.83,1,1,1,0.67,0,0.83,1,1,1,1,1,0,1,1,1,0.89,1,1,0,0.83,1,0.75,0.67,1,1,0,0,0,0.25,1,1,1,0,0.17,0.83,1,1,1,0.83,0,0.67,1,1,1,0.78,0.22,0.5,1,1,1,0.33,0,0,1,1,1,1,1,0.5,0.33,1,1,1,1,1,1,1],"ar":0.76},{"d":1,"f":[0,0,0,0.25,0,0,0,0,0.5,1,1,1,1,0.75,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,0.5,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,0.67,1,1,1,1,1,1,0.5,1,1,1,1,1,1,0.5,1,1,1,1,1,1,0],"ar":0.36},{"d":1,"f":[0,0,0,0,0,0,0.5,0,0.33,0.67,0.67,0.67,0.67,0.5,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,0.5,1,1,1,1,1,1,0.5,0.67,1,1,1,1,0.67,0.17],"ar":0.357},{"d":2,"f":[0,0,0,0,0.5,0,0,0,0,0.67,1,1,1,0.5,0,0.33,1,1,1,1,1,0,0.67,1,1,0.78,1,1,0,0.33,1,0.83,1,1,1,0,0,0,0.5,1,1,1,0,0,0.67,1,1,1,0.5,0,0.56,1,1,0.89,0.44,0,0.25,1,1,0.83,0.17,0,0,0.5,1,1,1,1,0.67,0.33,0.67,1,1,1,1,1,1],"ar":0.8},{"d":3,"f":[0,0,0,0.5,0.5,0.17,0,0,0.17,0.83,1,1,1,0.5,0,0.67,1,1,1,1,1,0,0.89,1,1,0.89,1,1,0,0,0.83,0.5,1,1,1,0,0.17,0.83,1,1,1,0.83,0,0.17,1,1,1,1,0.83,0,0.11,0.22,0.5,0.89,1,1,0.75,1,0.83,0.25,0.83,1,1,1,1,1,1,1,1,0.83,0.33,1,1,1,1,1,0.33],"ar":0.76},{"d":2,"f":[0,0,0.17,0.5,0.5,0.5,0,0,0.17,1,1,1,1,0.83,0,0.83,1,1,1,1,1,0,1,1,0.78,0.67,1,1,0,0.17,0.67,0.17,0.83,1,1,0,0,0.17,0.83,1,1,0.83,0,0.17,0.83,1,1,1,0.5,0,0.89,1,1,0.78,0.22,0,0.33,1,1,0.83,0,0,0,0.67,1,1,1,1,1,0.67,0.89,1,1,1,1,1,1],"ar":0.84},{"d":2,"f":[0,0,0.5,1,1,1,0.67,0,0.17,1,1,1,1,1,0,0.67,1,1,0.83,1,1,0,0.83,1,0.83,0.5,1,1,0,0,0.5,0.33,1,1,1,0,0,0.17,1,1,1,0.83,0,0.17,1,1,1,1,0.17,0,0.5,1,1,1,0.33,0,0,1,1,1,0.17,0,0,0.5,1,1,1,1,1,0.67,0.83,1,1,1,1,1,1],"ar":0.87},{"d":2,"f":[0,0,0.17,0.5,1,0.83,0.33,0,0.17,1,1,1,1,1,0,0.67,1,1,1,1,1,0,1,1,1,0.67,1,1,0,0.33,0.5,0.25,0.83,1,1,0,0,0.33,0.75,1,1,1,0,0.17,1,1,1,1,0.5,0,0.89,1,1,0.89,0.22,0,0.5,1,1,1,0.33,0.5,0,1,1,1,1,1,1,1,0.67,1,1,1,1,1,0.89],"ar":0.76},{"d":3,"f":[0,0.17,0.67,1,1,0.83,0.17,0,0.83,1,1,1,1,0.67,0.33,1,1,1,1,1,1,0.33,0.67,1,0.78,1,1,1,0,0.17,0.67,1,1,1,0.83,0,0.33,1,1,1,1,0.33,0,0.33,1,1,1,1,0.5,0.22,0.33,0.11,0.44,1,1,1,1,1,0.5,0.67,1,1,0.83,1,1,1,1,1,1,0.67,0.78,1,1,1,1,0.89,0.11],"ar":0.84},{"d":8,"f":[0,0,0.67,1,1,0.5,0,0,0.83,1,1,1,1,0.83,0.17,1,1,1,1,1,1,0.56,1,1,0.67,0.89,1,1,0.33,1,1,1,1,1,0.83,0.17,1,1,1,1,1,0.67,0.67,1,1,1,1,1,0.83,1,1,1,0.56,1,1,1,1,1,1,0.67,1,1,0.83,1,1,1,1,1,1,0.5,0.33,1,1,1,1,0.78,0],"ar":0.84},{"d":3,"f":[0,0,0.33,0.67,1,0.5,0,0,0.5,1,1,1,1,0.5,0,1,1,1,1,1,1,0.11,0.89,1,0.89,1,1,1,0,0,0.67,1,1,1,0.83,0,0.33,1,1,1,1,0.5,0,0.17,1,1,1,1,0.5,0,0,0.22,0.33,1,1,1,1,1,0.83,0.67,1,1,0.83,1,1,1,1,1,1,0.5,0.33,1,1,1,1,0.89,0.11],"ar":0.84},{"d":5,"f":[0,0,0.33,0.5,0.5,0.5,0.33,0,0.83,1,1,1,1,0.67,0.5,1,1,1,1,1,0.78,0.5,1,1,1,1,0.33,0,1,1,1,1,1,1,0.17,1,1,1,1,1,1,0.78,0.75,1,1,0.75,1,1,1,0.5,0.83,0.5,0,0.83,1,1,1,1,0.67,0.5,1,1,0.89,1,1,1,1,1,1,0.33,0.33,0.78,1,1,1,0.56,0],"ar":0.731}];
+let scanRefs=null,scanStream=null,scanTimer=null,scanObs={},scanFrames=0,scanLast=[],REV=[];
+const work=document.createElement('canvas'),hiC=document.createElement('canvas');
+const wctx=work.getContext('2d',{willReadFrequently:true}),hctx=hiC.getContext('2d',{willReadFrequently:true});
+const isFood=k=>!!BY[SCAN_NAMES[k]];
+const TESTV=new URLSearchParams(location.search).get('testvideo'),TESTF=+new URLSearchParams(location.search).get('testframes')||0;
+let SRC=null,tfi=0;
+const srcW=v=>v.videoWidth||v.naturalWidth||0,srcH=v=>v.videoHeight||v.naturalHeight||0;
+function loadRefs(){
+  if(scanRefs)return Promise.resolve(scanRefs);
+  return new Promise((res,rej)=>{const im=new Image();im.onload=()=>{const c=document.createElement('canvas');c.width=im.naturalWidth;c.height=im.naturalHeight;const x=c.getContext('2d',{willReadFrequently:true});x.drawImage(im,0,0);
+    scanRefs=SC.buildRefs({w:c.width,h:c.height,d:x.getImageData(0,0,c.width,c.height).data},SCAN_NAMES.length);res(scanRefs)};im.onerror=rej;im.src='tarama.webp'});
+}
+const setMsg=t=>{$('scanmsg').textContent=t};
+function guide(vw,vh){let gw,gh;if(vw<vh){gw=vw*0.94;gh=gw/1.25}else{gh=vh*0.8;gw=Math.min(vw*0.92,gh*1.3)}return {x:(vw-gw)/2,y:(vh-gh)*(vw<vh?0.42:0.5),w:gw,h:gh}}
+async function openScan(keep){
+  $('scan').hidden=false;$('scanrev').hidden=true;$('scanlive').hidden=false;document.body.style.overflow='hidden';
+  if(keep!==true){scanObs={};scanFrames=0}scanLast=[];drawScanList();setMsg('Kamera açılıyor…');
+  try{
+    await loadRefs();
+    const v=$('cam');SRC=v;
+    if(TESTF){SRC=new Image();scanStream={getTracks:()=>[]};const next=()=>new Promise(r=>{tfi++;if(tfi>TESTF){openReview();console.log('REV '+REV.length+' :: '+REV.map(r=>SCAN_NAMES[r.k]+' '+r.c+(r.unsure?'?':'')).join(', '));r(false);return}SRC.onload=()=>r(true);SRC.src='fr/'+String(tfi).padStart(3,'0')+'.jpg'});
+      const step=async()=>{if(!(await next()))return;processFrame();setTimeout(step,0)};setMsg('Test kareleri');step();return}
+    if(TESTV){v.src=TESTV;v.muted=true;scanStream={getTracks:()=>[]};v.onended=()=>{openReview();console.log('REV '+REV.length+' :: '+REV.map(r=>SCAN_NAMES[r.k]+' '+r.c+(r.unsure?'?':'')).join(', '))};await v.play()}
+    else{scanStream=await navigator.mediaDevices.getUserMedia({video:{facingMode:{ideal:'environment'},width:{ideal:1920},height:{ideal:1080}},audio:false});v.srcObject=scanStream;await v.play()}
+    setMsg('Malzemeler sayfasını çerçeveye sığdır. Sayfaları yavaşça çevir.');
+    loop();
+  }catch(e){setMsg(location.protocol!=='https:'||!navigator.mediaDevices?'Kamera bu sayfada açılmıyor. Telefondaki uygulama sürümünü kullan.':'Kamera açılamadı. Ayarlar > Uygulamalar > Safari > Kamera iznini kontrol et.')}
+}
+function stopCam(){clearTimeout(scanTimer);scanTimer=null;if(scanStream){scanStream.getTracks().forEach(t=>t.stop());scanStream=null}}
+function closeScan(){stopCam();$('scan').hidden=true;document.body.style.overflow=''}
+function loop(){
+  if(!scanStream)return;
+  const t0=performance.now();
+  try{processFrame()}catch(e){setMsg('Tarama hatası: '+e.message)}
+  scanTimer=setTimeout(loop,Math.max(60,220-(performance.now()-t0)));
+}
+function processFrame(){
+  const v=SRC||$('cam'),vw=srcW(v),vh=srcH(v);if(!vw)return;
+  const g=guide(vw,vh),mx=g.w*0.04,my=g.h*0.05;
+  const rx=Math.max(0,g.x-mx),ry=Math.max(0,g.y-my),rw=Math.min(vw-rx,g.w+2*mx),rh=Math.min(vh-ry,g.h+2*my);
+  const W=540,Hh=Math.round(rh*W/rw);work.width=W;work.height=Hh;wctx.drawImage(v,rx,ry,rw,rh,0,0,W,Hh);
+  const img={w:W,h:Hh,d:wctx.getImageData(0,0,W,Hh).data};
+  const map={rx,ry,k:rw/W,g};
+  const G=SC.grayGrad(img),grid=SC.findGrid(img,G),C=grid?SC.cells(img,G,grid):[];
+  if(C.length<6){scanLast=[];drawOverlay(map);setMsg('Izgara aranıyor… Malzemeler sayfası çerçevenin içinde olsun.');return}
+  const cl=C.map(c=>({c,...SC.classify(img,c,scanRefs)}));
+  const full=cl.filter(o=>o.std>=22);
+  const mb=full.reduce((a,o)=>a+Math.max(...o.sc),0)/Math.max(1,full.length);
+  if(!full.length||mb<0.42){scanLast=cl.map(o=>({c:o.c,st:'empty'}));drawOverlay(map);setMsg('Izgara net değil. Biraz yaklaş, ekrana dik tut.');return}
+  const HW=Math.min(1280,Math.round(rw)),HH=Math.round(rh*HW/rw);hiC.width=HW;hiC.height=HH;hctx.drawImage(v,rx,ry,rw,rh,0,0,HW,HH);
+  const hi={w:HW,h:HH,d:hctx.getImageData(0,0,HW,HH).data},s=HW/W;
+  const dp=SC.orderDP(full);scanFrames++;
+  full.forEach((o,k)=>{const it=dp.items[k],v0=o.sc[it];let rank=0;for(let q=0;q<o.sc.length;q++)if(o.sc[q]>v0)rank++;
+    const cnt=SC.readCount(hi,o.c,s,DIGITS),top=[...o.sc.keys()].sort((a,b)=>o.sc[b]-o.sc[a]).slice(0,4);
+    const ob=scanObs[it]||(scanObs[it]={k:it,seen:0,good:0,counts:{},sure:{},alts:{},first:scanFrames});
+    ob.seen++;if(rank<3)ob.good++;ob.last=scanFrames;
+    if(cnt.v){ob.counts[cnt.v]=(ob.counts[cnt.v]||0)+1;if(cnt.sure)ob.sure[cnt.v]=(ob.sure[cnt.v]||0)+1}
+    top.forEach(a=>{if(a!==it)ob.alts[a]=(ob.alts[a]||0)+1});
+    o.item=it});
+  scanLast=cl.map(o=>({c:o.c,st:o.std<22?'empty':(scanObs[o.item]&&scanObs[o.item].seen>=3?'ok':'wait')}));
+  drawOverlay(map);drawScanList();
+  setMsg('Sayfa okunuyor. Yeşil olanlar eklendi, sonraki sayfaya geçebilirsin.');
+}
+function drawOverlay(map){
+  const cv=$('ov'),r=cv.getBoundingClientRect(),dpr=window.devicePixelRatio||1;
+  if(cv.width!==Math.round(r.width*dpr)||cv.height!==Math.round(r.height*dpr)){cv.width=Math.round(r.width*dpr);cv.height=Math.round(r.height*dpr)}
+  const x=cv.getContext('2d'),v=SRC||$('cam'),vw=srcW(v),vh=srcH(v);x.clearRect(0,0,cv.width,cv.height);if(!vw)return;
+  const sc=Math.max(cv.width/vw,cv.height/vh),ox=(cv.width-vw*sc)/2,oy=(cv.height-vh*sc)/2,P=(a,b)=>[ox+a*sc,oy+b*sc];
+  const g=map.g,[gx,gy]=P(g.x,g.y);x.setLineDash([10*dpr,8*dpr]);x.lineWidth=2*dpr;x.strokeStyle='#ffffffb0';x.strokeRect(gx,gy,g.w*sc,g.h*sc);x.setLineDash([]);
+  scanLast.forEach(o=>{if(o.st==='empty')return;const [a,b]=P(map.rx+o.c.x*map.k,map.ry+o.c.y*map.k),z=o.c.c*map.k*sc;
+    x.lineWidth=(o.st==='ok'?4:2.5)*dpr;x.strokeStyle=o.st==='ok'?'#3ddc6b':'#ffd23f';x.strokeRect(a,b,z,z)});
+}
+const obCount=o=>{if((o.sure[5]||0)>=2)return 5;const pick=m=>{let b=0,bv=0;for(const [v,n] of Object.entries(m))if(n>bv){bv=n;b=+v}return b};return pick(o.sure)||pick(o.counts)};
+const obUnsure=o=>o.good/o.seen<0.5||!obCount(o);
+function accepted(){return Object.values(scanObs).filter(o=>o.seen>=3&&isFood(o.k))}
+function drawScanList(){
+  const A=accepted().sort((a,b)=>b.first-a.first);
+  const unsure=A.filter(obUnsure).length;
+  $('scancount').textContent=A.length?A.length+' malzeme bulundu'+(unsure?', '+unsure+' tanesini kontrol edeceksin':''):'Henüz malzeme yok';
+  $('scanlist').innerHTML=A.map(o=>{const c=obCount(o);return '<span class="sitem'+(obUnsure(o)?' un':'')+'" title="'+esc(SCAN_NAMES[o.k])+'" data-g="'+o.good+'/'+o.seen+'">'+icp(o.k,40)+'<b>'+(c?(c>=5?'5+':c):'?')+'</b></span>'}).join('');
+  $('scandone').disabled=!A.length;
+}
+function openReview(){
+  stopCam();
+  REV=accepted().map(o=>{const c=obCount(o),alts=Object.entries(o.alts).sort((a,b)=>b[1]-a[1]).map(a=>+a[0]).filter(isFood).slice(0,3);
+    return {k:o.k,c:c||1,unsure:obUnsure(o),nocount:!c,alts}}).sort((a,b)=>(b.unsure-a.unsure)||(a.k-b.k));
+  $('scanlive').hidden=true;$('scanrev').hidden=false;drawReview();
+}
+function drawReview(){
+  const u=REV.filter(r=>r.unsure).length;
+  $('revsum').textContent=REV.length+' malzeme okundu'+(u?'. Sarı işaretli '+u+' tanesine bir bak: malzeme ya da sayı yanlış olabilir.':'. Hepsi net okundu.');
+  $('revlist').innerHTML=REV.length?REV.map((r,n)=>'<div class="rv'+(r.unsure?' un':'')+'" data-n="'+n+'">'+icp(r.k,44)+'<div class="rvt"><b>'+esc(SCAN_NAMES[r.k])+'</b>'+
+    (r.unsure?'<span class="rvw">'+(r.nocount?'Sayıyı okuyamadım, seç.':'Emin değilim, gerekirse değiştir.')+'</span>':'')+
+    '<div class="cn">'+[1,2,3,4,5].map(v=>'<button data-c="'+v+'" aria-pressed="'+(r.c===v)+'">'+(v===5?'5+':v)+'</button>').join('')+'</div>'+
+    (r.alts.length?'<div class="alts"><span>Belki:</span>'+r.alts.map(a=>'<button data-a="'+a+'" title="'+esc(SCAN_NAMES[a])+'" aria-label="'+esc(SCAN_NAMES[a])+'">'+icp(a,34)+'</button>').join('')+'</div>':'')+
+    '</div><button class="rx" data-x="1" aria-label="Çıkar">×</button></div>').join(''):'<p class="none">Bir şey okunmadı.</p>';
+}
+$('revlist').addEventListener('click',ev=>{const row=ev.target.closest('.rv');if(!row)return;const r=REV[+row.dataset.n],b=ev.target.closest('button');if(!b)return;
+  if(b.dataset.c){r.c=+b.dataset.c;r.nocount=false;r.unsure=false}
+  if(b.dataset.a){const old=r.k;r.k=+b.dataset.a;r.alts=r.alts.map(a=>a===r.k?old:a);r.unsure=false}
+  if(b.dataset.x)REV.splice(+row.dataset.n,1);
+  drawReview()});
+function applyScan(replace){
+  if(replace)inv={};
+  REV.forEach(r=>{const x=BY[SCAN_NAMES[r.k]];if(x)inv[x.i]=Math.min(5,r.c)});
+  invEx=false;saveInv();drawEnvHead();drawEnvGrid();plan();closeScan();tab('env');
+}
+$('scanbtn').addEventListener('click',()=>openScan(false));
+$('scanx').addEventListener('click',closeScan);
+$('scandone').addEventListener('click',openReview);
+$('revback').addEventListener('click',()=>openScan(true));
+$('revrep').addEventListener('click',()=>applyScan(true));
+$('revadd').addEventListener('click',()=>applyScan(false));
+$('revcancel').addEventListener('click',closeScan);
+if(TESTV||TESTF)setTimeout(()=>openScan(false),300);
+document.addEventListener('visibilitychange',()=>{if(document.hidden){if(scanStream)stopCam()}else if(!$('scan').hidden&&!$('scanlive').hidden&&!scanStream)openScan(true)});
+
+{const t=ls.get('botw-tab');if(TABS.includes(t))tab(t)}
+drawBook();draw();drawEnvHead();drawEnvGrid();plan();
+}
+</script>
+<script>if('serviceWorker' in navigator&&location.protocol==='https:')navigator.serviceWorker.register('sw.js').catch(()=>{})</script>
+</body>
+</html>
