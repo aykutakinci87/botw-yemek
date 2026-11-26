@@ -203,6 +203,9 @@ body{padding-top:env(safe-area-inset-top,0px)}
 .alts button{border:1px solid var(--line);background:var(--tile);border-radius:10px;padding:2px;cursor:pointer;display:inline-flex}
 .rx{width:40px;height:40px;border-radius:10px;border:1px solid var(--line);background:var(--bg);color:var(--ink);font-size:20px;cursor:pointer}
 .revacts{display:flex;flex-wrap:wrap;gap:8px;margin-top:18px}
+.rv.off{opacity:.62}
+.rx.add{background:var(--fire);border-color:var(--fire);color:#1b0c00;font-weight:700}
+#revrep:disabled,#revadd:disabled{opacity:.45;cursor:default}
 </style>
 </head>
 <body>
@@ -881,15 +884,20 @@ $('etab').innerHTML='<thead><tr><th>Etki</th><th>Ne yapar</th><th class="n">Lv2 
 
 const io=new IntersectionObserver(en=>{en.forEach(x=>$('bar').classList.toggle('show',!x.isIntersecting&&x.boundingClientRect.top<0))});
 io.observe($('out'));
-/* Kamerayla tarama: canlı kameradan envanter sayfalarını okuyup çantaya ekler */
+/* Kamerayla tarama: canlı kameradan envanter sayfalarını okuyup çantaya ekler.
+   Her kutu için ayrı oy tutulur; bir malzeme ancak aynı kutuda art arda ve açık farkla kazanırsa eklenir.
+   Görüntü kayarken oy sayılmaz. Emin olunmayanlar eklenmez, kontrol ekranında sorulur. */
 const SC=window.SCAN;
+const QS0=new URLSearchParams(location.search);
 const DIGITS=[{"d":1,"f":[1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,0,1,1,1,1,1,1,0,1,1,1,1,1,1,0,1,1,1,1,1,1,0,1,1,1,1,1,1,1,1,1,1,1,1,1,0.67,1,1,1,1,1,0],"ar":0.28},{"d":7,"f":[0,0,0,0,0,0,0,1,1,1,1,1,1,1,1,1,1,1,1,1,1,0,0,0.5,0.25,1,1,1,0,0,0,0.25,1,1,1,0,0,0,0.83,1,1,1,0,0,1,1,1,1,0.5,0,0.5,1,1,1,1,0,0,0.67,1,1,1,0.33,0,0,1,1,1,1,0,0,0.33,1,1,1,0.67,0,0],"ar":0.423},{"d":9,"f":[0,0,0.33,0.5,0.5,0.33,0,0,0.5,1,1,1,1,0.17,0,1,1,1,1,1,0.67,0.5,1,0.89,0.33,0.22,1,1,0.5,1,0.67,0,0,1,1,0.5,1,0.83,0.25,0.67,1,1,0.25,1,1,1,1,1,1,0,0.33,1,1,1,1,1,0.5,1,0.17,0,0.5,1,0.67,1,1,1,1,1,1,0.33,0.17,1,1,1,1,0.67,0],"ar":0.76},{"d":1,"f":[1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,0,1,1,1,1,1,1,1,1,1,1,1,1,0.5,1,1,1,1,1,1,0.33,1,1,1,1,1,1,0,1,1,1,1,1,1,0,0.67,1,1,1,1,0.67,0],"ar":0.28},{"d":2,"f":[0,0,0.25,0.67,1,0.83,0.17,0,0.33,1,1,1,1,0.83,0,0.89,1,1,0.67,1,1,0.5,1,1,0.17,0,1,1,0,0.67,0.5,0,0.75,1,1,0,0,0.5,0.78,1,1,0.67,0,0.5,1,1,1,0.67,0,0.25,1,1,1,0.5,0,0,0.83,1,1,0.44,0.67,0.67,0.22,1,1,1,1,1,1,1,0.83,1,1,1,1,1,0.56],"ar":0.692},{"d":1,"f":[0,0,0,0.5,0.5,1,0.5,0.5,0.5,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,0.5,0.5,1,1,1,1,1,0.5,0.5,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,0.67,0.67,1,1,1,1,0.33],"ar":0.24},{"d":2,"f":[0,0,0,0.5,0.5,0.5,0,0,0,0.83,1,1,1,0.83,0,0.5,1,1,1,1,1,0,0.83,1,0.83,0.22,1,1,0,0.25,0.83,0,0.17,1,1,0,0,0,0.5,1,1,1,0,0,0.5,1,1,1,0.5,0,0.5,1,1,0.67,0.17,0,0.25,1,1,0.5,0.17,0,0,0.5,1,1,1,1,1,0.83,0.83,1,1,1,1,1,0.89],"ar":0.68},{"d":8,"f":[0,0,0.17,0.83,1,0.67,0.67,0,0.17,1,1,1,1,0.5,0,0.67,1,1,1,1,1,0,1,1,0.56,0.33,1,1,0,0.83,1,1,1,1,1,0,0.67,1,1,1,1,0.67,0.25,1,1,1,1,1,0.83,0.67,1,0.89,0.44,0.56,1,1,1,1,0.83,0,0.5,1,1,0.75,1,1,1,1,1,0.83,0.17,0.89,1,1,1,0.89,0.22],"ar":0.8},{"d":4,"f":[0,0,0,0,0.5,0.83,0.33,0,0,0,0.17,1,1,0.17,0,0,0,0.89,1,1,0.33,0,0,0.5,1,1,1,0.17,0,0.17,1,1,1,1,0,0,0.67,1,0.78,1,1,0,0.5,1,1,0.83,1,1,0.5,1,1,1,1,1,1,1,0.5,1,1,0.89,1,1,0.56,0,0,0,0.33,1,0.67,0,0,0,0,0.11,0.67,0.22,0],"ar":0.769},{"d":1,"f":[0,0,0,0.5,0.5,1,0.5,0.5,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,0.5,1,1,1,1,1,1,0,1,1,1,1,1,1,0,1,1,1,1,1,0.75,0,1,1,1,1,1,0.5,0,1,1,1,1,1,0.5,1,1,1,1,1,1,0.5,0.33,1,1,1,1,1,0],"ar":0.32},{"d":2,"f":[0,0,0,0.25,0.5,0.17,0,0,0,0.83,1,1,1,0.5,0,0.56,1,1,1,1,1,0,1,1,0.75,0,1,1,0,0.67,1,0,0.17,1,1,0,0,0.22,0.5,0.89,1,1,0,0,0.83,1,1,1,0.33,0,0.5,1,1,0.83,0.33,0,0.17,1,1,0.5,0.11,0,0,0.75,1,1,1,1,1,0.5,0.67,1,1,1,1,1,0.89],"ar":0.731},{"d":6,"f":[0,0,0,0.5,0.5,0.17,0,0,0,0.83,1,1,1,0.5,0,0.67,1,1,1,1,0.89,0,1,1,0.5,0,0.83,0.83,0.5,1,1,1,1,0.67,0,1,1,1,1,1,1,0.44,1,1,1,0.5,0.67,1,0.83,1,1,0.67,0,0.33,1,0.83,1,1,0.78,0,0.67,1,0.67,0.5,1,1,1,1,1,0.5,0,0.67,1,1,1,0.67,0],"ar":0.731},{"d":8,"f":[0,0,0,0,0.17,1,1,0,0,0.56,0.67,1,1,1,0,0.67,1,1,1,1,1,0,1,1,0.5,0.33,1,1,0,1,1,0.75,0.67,1,1,0,0.89,1,1,1,1,0.67,0.5,1,1,1,1,1,0.83,1,1,0.78,0.17,0.33,1,1,1,1,0.67,0,0.5,1,1,0.67,1,1,1,1,1,0.56,0,0.44,0.89,1,0.89,0.56,0],"ar":0.679},{"d":1,"f":[0,0,0,0,0.5,0.5,0,0,0.5,0.5,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,0,0.5,1,1,1,1,1,0,1,1,1,1,1,0.75,0,1,1,1,1,1,0.5,0,1,1,1,1,1,0.5,0,1,1,1,1,1,0.5,0.67,1,1,1,1,1,0],"ar":0.36},{"d":3,"f":[0,0,0,0.5,0.5,0.5,0,0,0.17,0.83,1,1,1,0.83,0,0.56,1,1,0.67,1,1,0,0.5,1,0.25,0,1,1,0,0,0,0.5,0.67,1,1,0,0,0.67,1,1,1,0.56,0,0,0.33,1,1,1,0.83,0,0,0,0,0.17,1,1,0.5,1,0.33,0,0.44,1,1,0.5,1,1,1,1,1,0.67,0,0.56,1,1,1,0.78,0.11],"ar":0.731},{"d":1,"f":[0,0,0,0.5,0.5,0.5,0.25,0.5,0.5,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,0,1,1,1,1,1,1,0.5,1,1,1,1,1,0.75,1,1,1,1,1,1,0.5,1,1,1,1,1,1,0.5,1,1,1,1,1,1,0.25,1,1,1,1,1,1,0],"ar":0.32},{"d":2,"f":[0,0.17,0.5,1,1,1,0.83,0,0,0.67,1,1,1,1,0,0.56,1,1,1,1,1,0,1,1,0.75,0,1,1,0,0.5,1,0,0.17,1,1,0,0,0.11,0.5,0.89,1,0.78,0,0,0.83,1,1,1,0,0,0.67,1,1,0.83,0.17,0,0.33,1,1,0.83,0.33,0.33,0.11,0.75,1,1,1,1,1,0.83,0.83,1,1,1,1,1,0.67],"ar":0.731},{"d":6,"f":[0,0,0,0.5,0.5,0.33,0,0,0.17,1,1,1,1,0.5,0,0.67,1,1,1,1,0.89,0.5,1,1,1,1,1,0.83,0.75,1,1,1,1,0.83,0,1,1,1,1,1,1,0.56,1,1,1,0.75,0.83,1,1,1,1,0.67,0,0.33,1,1,1,1,0.78,0.33,0.89,1,0.78,0.75,1,1,1,1,1,0.33,0.17,0.78,1,1,1,0.67,0],"ar":0.731},{"d":3,"f":[0,0,0.33,0.75,1,0.67,0,0,0.33,1,1,1,1,0.5,0,0.83,1,1,1,1,1,0,0.67,0.89,0.5,0.78,1,1,0,0,0.67,1,1,1,0.83,0,0,1,1,1,1,0.33,0,0,0.83,1,1,1,0.67,0.17,0.33,0.22,0.33,0.56,1,1,1,1,0.83,0.5,0.83,1,0.67,1,1,1,1,1,1,0.5,0.17,0.89,1,1,1,0.78,0],"ar":0.76},{"d":1,"f":[0,0,0,0,0,0.5,0.25,0,0,0.5,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,0,1,1,1,1,1,1,0,1,1,1,1,1,1,0,1,1,1,1,1,1,0.67,1,1,1,1,1,0.83,1,1,1,1,1,1,0.5,0.33,0.67,1,1,1,0.67,0.33],"ar":0.308},{"d":2,"f":[0,0,0,0.25,0.5,0.17,0,0,0.17,0.83,1,1,1,0.67,0,0.83,1,1,1,1,1,0,1,1,1,0.89,1,1,0,0.83,1,0.75,0.67,1,1,0,0,0,0.25,1,1,1,0,0.17,0.83,1,1,1,0.83,0,0.67,1,1,1,0.78,0.22,0.5,1,1,1,0.33,0,0,1,1,1,1,1,0.5,0.33,1,1,1,1,1,1,1],"ar":0.76},{"d":1,"f":[0,0,0,0.25,0,0,0,0,0.5,1,1,1,1,0.75,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,0.5,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,0.67,1,1,1,1,1,1,0.5,1,1,1,1,1,1,0.5,1,1,1,1,1,1,0],"ar":0.36},{"d":1,"f":[0,0,0,0,0,0,0.5,0,0.33,0.67,0.67,0.67,0.67,0.5,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,0.5,1,1,1,1,1,1,0.5,0.67,1,1,1,1,0.67,0.17],"ar":0.357},{"d":2,"f":[0,0,0,0,0.5,0,0,0,0,0.67,1,1,1,0.5,0,0.33,1,1,1,1,1,0,0.67,1,1,0.78,1,1,0,0.33,1,0.83,1,1,1,0,0,0,0.5,1,1,1,0,0,0.67,1,1,1,0.5,0,0.56,1,1,0.89,0.44,0,0.25,1,1,0.83,0.17,0,0,0.5,1,1,1,1,0.67,0.33,0.67,1,1,1,1,1,1],"ar":0.8},{"d":3,"f":[0,0,0,0.5,0.5,0.17,0,0,0.17,0.83,1,1,1,0.5,0,0.67,1,1,1,1,1,0,0.89,1,1,0.89,1,1,0,0,0.83,0.5,1,1,1,0,0.17,0.83,1,1,1,0.83,0,0.17,1,1,1,1,0.83,0,0.11,0.22,0.5,0.89,1,1,0.75,1,0.83,0.25,0.83,1,1,1,1,1,1,1,1,0.83,0.33,1,1,1,1,1,0.33],"ar":0.76},{"d":2,"f":[0,0,0.17,0.5,0.5,0.5,0,0,0.17,1,1,1,1,0.83,0,0.83,1,1,1,1,1,0,1,1,0.78,0.67,1,1,0,0.17,0.67,0.17,0.83,1,1,0,0,0.17,0.83,1,1,0.83,0,0.17,0.83,1,1,1,0.5,0,0.89,1,1,0.78,0.22,0,0.33,1,1,0.83,0,0,0,0.67,1,1,1,1,1,0.67,0.89,1,1,1,1,1,1],"ar":0.84},{"d":2,"f":[0,0,0.5,1,1,1,0.67,0,0.17,1,1,1,1,1,0,0.67,1,1,0.83,1,1,0,0.83,1,0.83,0.5,1,1,0,0,0.5,0.33,1,1,1,0,0,0.17,1,1,1,0.83,0,0.17,1,1,1,1,0.17,0,0.5,1,1,1,0.33,0,0,1,1,1,0.17,0,0,0.5,1,1,1,1,1,0.67,0.83,1,1,1,1,1,1],"ar":0.87},{"d":2,"f":[0,0,0.17,0.5,1,0.83,0.33,0,0.17,1,1,1,1,1,0,0.67,1,1,1,1,1,0,1,1,1,0.67,1,1,0,0.33,0.5,0.25,0.83,1,1,0,0,0.33,0.75,1,1,1,0,0.17,1,1,1,1,0.5,0,0.89,1,1,0.89,0.22,0,0.5,1,1,1,0.33,0.5,0,1,1,1,1,1,1,1,0.67,1,1,1,1,1,0.89],"ar":0.76},{"d":3,"f":[0,0.17,0.67,1,1,0.83,0.17,0,0.83,1,1,1,1,0.67,0.33,1,1,1,1,1,1,0.33,0.67,1,0.78,1,1,1,0,0.17,0.67,1,1,1,0.83,0,0.33,1,1,1,1,0.33,0,0.33,1,1,1,1,0.5,0.22,0.33,0.11,0.44,1,1,1,1,1,0.5,0.67,1,1,0.83,1,1,1,1,1,1,0.67,0.78,1,1,1,1,0.89,0.11],"ar":0.84},{"d":8,"f":[0,0,0.67,1,1,0.5,0,0,0.83,1,1,1,1,0.83,0.17,1,1,1,1,1,1,0.56,1,1,0.67,0.89,1,1,0.33,1,1,1,1,1,0.83,0.17,1,1,1,1,1,0.67,0.67,1,1,1,1,1,0.83,1,1,1,0.56,1,1,1,1,1,1,0.67,1,1,0.83,1,1,1,1,1,1,0.5,0.33,1,1,1,1,0.78,0],"ar":0.84},{"d":3,"f":[0,0,0.33,0.67,1,0.5,0,0,0.5,1,1,1,1,0.5,0,1,1,1,1,1,1,0.11,0.89,1,0.89,1,1,1,0,0,0.67,1,1,1,0.83,0,0.33,1,1,1,1,0.5,0,0.17,1,1,1,1,0.5,0,0,0.22,0.33,1,1,1,1,1,0.83,0.67,1,1,0.83,1,1,1,1,1,1,0.5,0.33,1,1,1,1,0.89,0.11],"ar":0.84},{"d":5,"f":[0,0,0.33,0.5,0.5,0.5,0.33,0,0.83,1,1,1,1,0.67,0.5,1,1,1,1,1,0.78,0.5,1,1,1,1,0.33,0,1,1,1,1,1,1,0.17,1,1,1,1,1,1,0.78,0.75,1,1,0.75,1,1,1,0.5,0.83,0.5,0,0.83,1,1,1,1,0.67,0.5,1,1,0.89,1,1,1,1,1,1,0.33,0.33,0.78,1,1,1,0.56,0],"ar":0.731}];
-let scanRefs=null,scanStream=null,scanTimer=null,scanObs={},scanFrames=0,scanLast=[],REV=[];
+const PRM=Object.assign({dec:1,acc:3,share:0.6,may:2,mshare:0.4,mv:0.3,chg:0.5},JSON.parse(QS0.get('prm')||'{}'));
+const DEC=PRM.dec,ACC_MIN=PRM.acc,ACC_SHARE=PRM.share,MAY_MIN=PRM.may,MAY_SHARE=PRM.mshare;
+let scanRefs=null,scanStream=null,scanTimer=null,scanObs={},slotH={},prevG=null,prevA=null,nE=0,ACC=new Set(),MAYBE=new Set(),scanFrames=0,scanLast=[],REV=[];
 const work=document.createElement('canvas'),hiC=document.createElement('canvas');
 const wctx=work.getContext('2d',{willReadFrequently:true}),hctx=hiC.getContext('2d',{willReadFrequently:true});
 const isFood=k=>!!BY[SCAN_NAMES[k]];
-const TESTV=new URLSearchParams(location.search).get('testvideo'),TESTF=+new URLSearchParams(location.search).get('testframes')||0;
-let SRC=null,tfi=0;
+const QS=new URLSearchParams(location.search),TESTV=QS.get('testvideo'),TESTF=+QS.get('testframes')||0;
+let SRC=null,tfi=0,nP=0,nG=0,nM=0;
 const srcW=v=>v.videoWidth||v.naturalWidth||0,srcH=v=>v.videoHeight||v.naturalHeight||0;
 function loadRefs(){
   if(scanRefs)return Promise.resolve(scanRefs);
@@ -898,17 +906,20 @@ function loadRefs(){
 }
 const setMsg=t=>{$('scanmsg').textContent=t};
 function guide(vw,vh){let gw,gh;if(vw<vh){gw=vw*0.94;gh=gw/1.25}else{gh=vh*0.8;gw=Math.min(vw*0.92,gh*1.3)}return {x:(vw-gw)/2,y:(vh-gh)*(vw<vh?0.42:0.5),w:gw,h:gh}}
+const revLog=()=>console.log('STAT frames '+nP+' nogrid '+nG+' moving '+nM+' voted '+scanFrames+' pages '+nE)||console.log('REV '+REV.filter(r=>r.on).length+' on / '+REV.length+' :: '+REV.map(r=>(r.on?'':'-')+SCAN_NAMES[r.k]+' '+(r.nocount?'?':r.c)).join(', '));
 async function openScan(keep){
   $('scan').hidden=false;$('scanrev').hidden=true;$('scanlive').hidden=false;document.body.style.overflow='hidden';
-  if(keep!==true){scanObs={};scanFrames=0}scanLast=[];drawScanList();setMsg('Kamera açılıyor…');
+  if(keep!==true){scanObs={};slotH={};ACC=new Set();MAYBE=new Set();scanFrames=0}
+  prevG=null;prevA=null;slotH={};scanLast=[];drawScanList();setMsg('Kamera açılıyor…');
   try{
     await loadRefs();
     const v=$('cam');SRC=v;
-    if(TESTF){SRC=new Image();scanStream={getTracks:()=>[]};const next=()=>new Promise(r=>{tfi++;if(tfi>TESTF){openReview();console.log('REV '+REV.length+' :: '+REV.map(r=>SCAN_NAMES[r.k]+' '+r.c+(r.unsure?'?':'')).join(', '));r(false);return}SRC.onload=()=>r(true);SRC.src='fr/'+String(tfi).padStart(3,'0')+'.jpg'});
-      const step=async()=>{if(!(await next()))return;processFrame();setTimeout(step,0)};setMsg('Test kareleri');step();return}
-    if(TESTV){v.src=TESTV;v.muted=true;scanStream={getTracks:()=>[]};v.onended=()=>{openReview();console.log('REV '+REV.length+' :: '+REV.map(r=>SCAN_NAMES[r.k]+' '+r.c+(r.unsure?'?':'')).join(', '))};await v.play()}
+    if(TESTF){SRC=new Image();scanStream={getTracks:()=>[]};
+      const next=()=>new Promise(r=>{tfi++;if(tfi>TESTF){openReview();revLog();r(false);return}SRC.onload=()=>r(true);SRC.src='fr/'+String(tfi).padStart(3,'0')+'.jpg'});
+      const step=async()=>{if(!(await next()))return;processFrame();setTimeout(step,0)};step();return}
+    if(TESTV){v.src=TESTV;v.muted=true;scanStream={getTracks:()=>[]};v.onended=()=>{openReview();revLog()};await v.play()}
     else{scanStream=await navigator.mediaDevices.getUserMedia({video:{facingMode:{ideal:'environment'},width:{ideal:1920},height:{ideal:1080}},audio:false});v.srcObject=scanStream;await v.play()}
-    setMsg('Malzemeler sayfasını çerçeveye sığdır. Sayfaları yavaşça çevir.');
+    setMsg('Malzemeler sayfasını çerçeveye sığdır. Her sayfada kutular yeşile dönene kadar sabit tut.');
     loop();
   }catch(e){setMsg(location.protocol!=='https:'||!navigator.mediaDevices?'Kamera bu sayfada açılmıyor. Telefondaki uygulama sürümünü kullan.':'Kamera açılamadı. Ayarlar > Uygulamalar > Safari > Kamera iznini kontrol et.')}
 }
@@ -920,6 +931,8 @@ function loop(){
   try{processFrame()}catch(e){setMsg('Tarama hatası: '+e.message)}
   scanTimer=setTimeout(loop,Math.max(60,220-(performance.now()-t0)));
 }
+function decayAll(f){for(const s in slotH){const H=slotH[s];for(const k in H)H[k]*=f}}
+function leader(H){let k=null,v=0,t=0;for(const q in H){t+=H[q];if(q!=='u'&&q!=='e'&&H[q]>v){v=H[q];k=+q}}return {k,v,t}}
 function processFrame(){
   const v=SRC||$('cam'),vw=srcW(v),vh=srcH(v);if(!vw)return;
   const g=guide(vw,vh),mx=g.w*0.04,my=g.h*0.05;
@@ -927,25 +940,43 @@ function processFrame(){
   const W=540,Hh=Math.round(rh*W/rw);work.width=W;work.height=Hh;wctx.drawImage(v,rx,ry,rw,rh,0,0,W,Hh);
   const img={w:W,h:Hh,d:wctx.getImageData(0,0,W,Hh).data};
   const map={rx,ry,k:rw/W,g};
+  decayAll(DEC);nP++;
   const G=SC.grayGrad(img),grid=SC.findGrid(img,G),C=grid?SC.cells(img,G,grid):[];
-  if(C.length<6){scanLast=[];drawOverlay(map);setMsg('Izgara aranıyor… Malzemeler sayfası çerçevenin içinde olsun.');return}
+  if(C.length<6){nG++;prevG=null;scanLast=[];drawOverlay(map);setMsg('Izgara aranıyor… Malzemeler sayfası çerçevenin içinde olsun.');return}
   const cl=C.map(c=>({c,...SC.classify(img,c,scanRefs)}));
   const full=cl.filter(o=>o.std>=22);
   const mb=full.reduce((a,o)=>a+Math.max(...o.sc),0)/Math.max(1,full.length);
-  if(!full.length||mb<0.42){scanLast=cl.map(o=>({c:o.c,st:'empty'}));drawOverlay(map);setMsg('Izgara net değil. Biraz yaklaş, ekrana dik tut.');return}
+  if(!full.length||mb<0.42){nG++;prevG=null;scanLast=[];drawOverlay(map);setMsg('Izgara net değil. Biraz yaklaş, ekrana dik tut.');return}
+  /* a moving grid (page sliding, shaking hand) gives no votes */
+  const i0=Math.min(...C.map(c=>c.i)),j0=Math.min(...C.map(c=>c.j)),pv=grid.p*map.k;
+  const ox=map.rx+(grid.x+i0*grid.p)*map.k,oy=map.ry+(grid.y+j0*grid.p)*map.k;
+  const moving=prevG&&(Math.abs(ox-prevG.x)>PRM.mv*pv||Math.abs(oy-prevG.y)>PRM.mv*pv||Math.abs(pv-prevG.p)>0.06*pv);
+  prevG={x:ox,y:oy,p:pv};
+  if(moving){nM++;slotH={};prevA=null;scanLast=cl.map(o=>({c:o.c,st:o.std<22?'empty':'wait'}));drawOverlay(map);setMsg('Görüntü kayıyor, telefonu sabit tut.');return}
   const HW=Math.min(1280,Math.round(rw)),HH=Math.round(rh*HW/rw);hiC.width=HW;hiC.height=HH;hctx.drawImage(v,rx,ry,rw,rh,0,0,HW,HH);
   const hi={w:HW,h:HH,d:hctx.getImageData(0,0,HW,HH).data},s=HW/W;
   const dp=SC.orderDP(full);scanFrames++;
-  full.forEach((o,k)=>{const it=dp.items[k],v0=o.sc[it];let rank=0;for(let q=0;q<o.sc.length;q++)if(o.sc[q]>v0)rank++;
+  const key=o=>(o.c.i-i0)+','+(o.c.j-j0);
+  /* a new page starts a fresh round of votes: most slots read differently from the previous frame */
+  const A={};full.forEach((o,q)=>{const it=dp.items[q],v0=o.sc[it];let rank=0;for(let z=0;z<o.sc.length;z++)if(o.sc[z]>v0)rank++;o.item=it;o.rank=rank;A[key(o)]=rank<5?it:'u'});
+  cl.filter(o=>o.std<22).forEach(o=>{A[key(o)]='e'});
+  if(prevA){let n=0,d=0;for(const q in A)if(q in prevA){n++;if(A[q]!==prevA[q])d++}if(!n||d/n>=PRM.chg){slotH={};nE++}}else{slotH={};nE++}
+  prevA=A;
+  cl.filter(o=>o.std<22).forEach(o=>{const H=slotH[key(o)]||(slotH[key(o)]={});H.e=(H.e||0)+1});
+  full.forEach(o=>{const it=o.item,rank=o.rank;
+    const H=slotH[key(o)]||(slotH[key(o)]={});
+    if(rank>=5){H.u=(H.u||0)+1;return}
+    H[it]=(H[it]||0)+1;
     const cnt=SC.readCount(hi,o.c,s,DIGITS),top=[...o.sc.keys()].sort((a,b)=>o.sc[b]-o.sc[a]).slice(0,4);
-    const ob=scanObs[it]||(scanObs[it]={k:it,seen:0,good:0,counts:{},sure:{},alts:{},first:scanFrames});
-    ob.seen++;if(rank<3)ob.good++;ob.last=scanFrames;
+    const ob=scanObs[it]||(scanObs[it]={k:it,counts:{},sure:{},alts:{},first:scanFrames});
     if(cnt.v){ob.counts[cnt.v]=(ob.counts[cnt.v]||0)+1;if(cnt.sure)ob.sure[cnt.v]=(ob.sure[cnt.v]||0)+1}
-    top.forEach(a=>{if(a!==it)ob.alts[a]=(ob.alts[a]||0)+1});
-    o.item=it});
-  scanLast=cl.map(o=>({c:o.c,st:o.std<22?'empty':(scanObs[o.item]&&scanObs[o.item].seen>=3?'ok':'wait')}));
+    top.forEach(a=>{if(a!==it)ob.alts[a]=(ob.alts[a]||0)+1})});
+  scanLast=cl.map(o=>{if(o.std<22)return {c:o.c,st:'empty'};const L=leader(slotH[key(o)]||{});
+    if(L.k!==null&&L.v>=ACC_MIN&&L.v>=ACC_SHARE*L.t){if(isFood(L.k)){if(!ACC.has(L.k)&&scanObs[L.k])scanObs[L.k].first=scanFrames;ACC.add(L.k);MAYBE.delete(L.k)}return {c:o.c,st:'ok'}}
+    if(L.k!==null&&L.v>=MAY_MIN&&L.v>=MAY_SHARE*L.t&&!ACC.has(L.k)&&isFood(L.k))MAYBE.add(L.k);
+    return {c:o.c,st:'wait'}});
   drawOverlay(map);drawScanList();
-  setMsg('Sayfa okunuyor. Yeşil olanlar eklendi, sonraki sayfaya geçebilirsin.');
+  setMsg(scanLast.some(o=>o.st==='wait')?'Okunuyor, sabit tut…':'Bu sayfa tamam, sonraki sayfaya geç.');
 }
 function drawOverlay(map){
   const cv=$('ov'),r=cv.getBoundingClientRect(),dpr=window.devicePixelRatio||1;
@@ -956,39 +987,38 @@ function drawOverlay(map){
   scanLast.forEach(o=>{if(o.st==='empty')return;const [a,b]=P(map.rx+o.c.x*map.k,map.ry+o.c.y*map.k),z=o.c.c*map.k*sc;
     x.lineWidth=(o.st==='ok'?4:2.5)*dpr;x.strokeStyle=o.st==='ok'?'#3ddc6b':'#ffd23f';x.strokeRect(a,b,z,z)});
 }
-const obCount=o=>{if((o.sure[5]||0)>=2)return 5;const pick=m=>{let b=0,bv=0;for(const [v,n] of Object.entries(m))if(n>bv){bv=n;b=+v}return b};return pick(o.sure)||pick(o.counts)};
-const obUnsure=o=>o.good/o.seen<0.5||!obCount(o);
-function accepted(){return Object.values(scanObs).filter(o=>o.seen>=3&&isFood(o.k))}
+const obCount=o=>{if(!o)return 0;if((o.sure[5]||0)>=2)return 5;const pick=m=>{let b=0,bv=0;for(const [v,n] of Object.entries(m))if(n>bv){bv=n;b=+v}return b};return pick(o.sure)||pick(o.counts)};
 function drawScanList(){
-  const A=accepted().sort((a,b)=>b.first-a.first);
-  const unsure=A.filter(obUnsure).length;
-  $('scancount').textContent=A.length?A.length+' malzeme bulundu'+(unsure?', '+unsure+' tanesini kontrol edeceksin':''):'Henüz malzeme yok';
-  $('scanlist').innerHTML=A.map(o=>{const c=obCount(o);return '<span class="sitem'+(obUnsure(o)?' un':'')+'" title="'+esc(SCAN_NAMES[o.k])+'" data-g="'+o.good+'/'+o.seen+'">'+icp(o.k,40)+'<b>'+(c?(c>=5?'5+':c):'?')+'</b></span>'}).join('');
-  $('scandone').disabled=!A.length;
+  const A=[...ACC].map(k=>scanObs[k]).filter(Boolean).sort((a,b)=>b.first-a.first);
+  $('scancount').textContent=A.length?A.length+' malzeme eklendi'+(MAYBE.size?', '+MAYBE.size+' tanesinden emin değilim':''):'Henüz malzeme yok';
+  $('scanlist').innerHTML=A.map(o=>{const c=obCount(o);return '<span class="sitem'+(c?'':' un')+'" title="'+esc(SCAN_NAMES[o.k])+'">'+icp(o.k,40)+'<b>'+(c?(c>=5?'5+':c):'?')+'</b></span>'}).join('');
+  $('scandone').disabled=!A.length&&!MAYBE.size;
 }
 function openReview(){
   stopCam();
-  REV=accepted().map(o=>{const c=obCount(o),alts=Object.entries(o.alts).sort((a,b)=>b[1]-a[1]).map(a=>+a[0]).filter(isFood).slice(0,3);
-    return {k:o.k,c:c||1,unsure:obUnsure(o),nocount:!c,alts}}).sort((a,b)=>(b.unsure-a.unsure)||(a.k-b.k));
+  const row=(k,on)=>{const o=scanObs[k],c=obCount(o),alts=o?Object.entries(o.alts).sort((a,b)=>b[1]-a[1]).map(a=>+a[0]).filter(isFood).slice(0,3):[];return {k,c:c||1,nocount:!c,on,alts}};
+  REV=[...ACC].map(k=>row(k,true)).sort((a,b)=>(b.nocount-a.nocount)||(a.k-b.k)).concat([...MAYBE].filter(k=>!ACC.has(k)).map(k=>row(k,false)).sort((a,b)=>a.k-b.k));
   $('scanlive').hidden=true;$('scanrev').hidden=false;drawReview();
 }
 function drawReview(){
-  const u=REV.filter(r=>r.unsure).length;
-  $('revsum').textContent=REV.length+' malzeme okundu'+(u?'. Sarı işaretli '+u+' tanesine bir bak: malzeme ya da sayı yanlış olabilir.':'. Hepsi net okundu.');
-  $('revlist').innerHTML=REV.length?REV.map((r,n)=>'<div class="rv'+(r.unsure?' un':'')+'" data-n="'+n+'">'+icp(r.k,44)+'<div class="rvt"><b>'+esc(SCAN_NAMES[r.k])+'</b>'+
-    (r.unsure?'<span class="rvw">'+(r.nocount?'Sayıyı okuyamadım, seç.':'Emin değilim, gerekirse değiştir.')+'</span>':'')+
-    '<div class="cn">'+[1,2,3,4,5].map(v=>'<button data-c="'+v+'" aria-pressed="'+(r.c===v)+'">'+(v===5?'5+':v)+'</button>').join('')+'</div>'+
-    (r.alts.length?'<div class="alts"><span>Belki:</span>'+r.alts.map(a=>'<button data-a="'+a+'" title="'+esc(SCAN_NAMES[a])+'" aria-label="'+esc(SCAN_NAMES[a])+'">'+icp(a,34)+'</button>').join('')+'</div>':'')+
-    '</div><button class="rx" data-x="1" aria-label="Çıkar">×</button></div>').join(''):'<p class="none">Bir şey okunmadı.</p>';
+  const on=REV.filter(r=>r.on),nc=on.filter(r=>r.nocount).length,off=REV.length-on.length;
+  $('revsum').textContent=on.length+' malzeme eklenecek.'+(nc?' Sayısını okuyamadığım '+nc+' tanesinin sayısını seç.':'')+(off?' Emin olamadığım '+off+' malzeme en altta, eklenmeyecek. Gerçekten varsa + ile ekle.':'');
+  $('revlist').innerHTML=REV.length?REV.map((r,n)=>'<div class="rv'+(r.on?(r.nocount?' un':''):' off')+'" data-n="'+n+'">'+icp(r.k,44)+'<div class="rvt"><b>'+esc(SCAN_NAMES[r.k])+'</b>'+
+    (!r.on?'<span class="rvw">Emin değilim, eklenmeyecek.</span>':r.nocount?'<span class="rvw">Sayıyı okuyamadım, seç.</span>':'')+
+    (r.on?'<div class="cn">'+[1,2,3,4,5].map(v=>'<button data-c="'+v+'" aria-pressed="'+(!r.nocount&&r.c===v)+'">'+(v===5?'5+':v)+'</button>').join('')+'</div>':'')+
+    (r.alts.length?'<div class="alts"><span>'+(r.on?'Yanlışsa:':'Belki:')+'</span>'+r.alts.map(a=>'<button data-a="'+a+'" title="'+esc(SCAN_NAMES[a])+'" aria-label="'+esc(SCAN_NAMES[a])+'">'+icp(a,34)+'</button>').join('')+'</div>':'')+
+    '</div>'+(r.on?'<button class="rx" data-x="1" aria-label="Çıkar">×</button>':'<button class="rx add" data-on="1" aria-label="Ekle">+</button>')+'</div>').join(''):'<p class="none">Bir şey okunmadı. Taramaya dönüp her sayfada kutular yeşile dönene kadar bekle.</p>';
+  $('revrep').disabled=$('revadd').disabled=!on.length;
 }
 $('revlist').addEventListener('click',ev=>{const row=ev.target.closest('.rv');if(!row)return;const r=REV[+row.dataset.n],b=ev.target.closest('button');if(!b)return;
-  if(b.dataset.c){r.c=+b.dataset.c;r.nocount=false;r.unsure=false}
-  if(b.dataset.a){const old=r.k;r.k=+b.dataset.a;r.alts=r.alts.map(a=>a===r.k?old:a);r.unsure=false}
+  if(b.dataset.c){r.c=+b.dataset.c;r.nocount=false}
+  if(b.dataset.a){const old=r.k;r.k=+b.dataset.a;r.alts=r.alts.map(a=>a===r.k?old:a)}
+  if(b.dataset.on){r.on=true}
   if(b.dataset.x)REV.splice(+row.dataset.n,1);
   drawReview()});
 function applyScan(replace){
   if(replace)inv={};
-  REV.forEach(r=>{const x=BY[SCAN_NAMES[r.k]];if(x)inv[x.i]=Math.min(5,r.c)});
+  REV.forEach(r=>{if(!r.on)return;const x=BY[SCAN_NAMES[r.k]];if(x)inv[x.i]=Math.min(5,r.c)});
   invEx=false;saveInv();drawEnvHead();drawEnvGrid();plan();closeScan();tab('env');
 }
 $('scanbtn').addEventListener('click',()=>openScan(false));
