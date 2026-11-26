@@ -217,6 +217,37 @@ body{padding-top:env(safe-area-inset-top,0px)}
 .tca .go{margin:0;min-width:96px;font-size:16px;min-height:48px}
 .sk{border:1px solid #ffffff44;background:transparent;color:#fff;border-radius:999px;min-height:40px;font-weight:600;cursor:pointer}
 .tcard .cn button{min-width:52px;height:48px;font-size:17px}
+#scanlive{position:relative}
+.camwrap{position:absolute;inset:0}
+.sbot{position:absolute;left:0;right:0;bottom:0;background:#0f1f16e6}
+.stxt{flex:1;display:grid;gap:6px}
+.shint{margin:0;font-size:14px;background:#ff7a1a;color:#1b0c00;border-radius:8px;padding:6px 10px;font-weight:600}
+.stog{flex:none;border:1px solid #ffffff55;background:#00000055;color:#fff;border-radius:999px;padding:8px 12px;font-weight:600;font-size:14px;min-height:44px;cursor:pointer}
+.stog[aria-pressed=true]{background:#2fb45a;border-color:#2fb45a;color:#06200f}
+@media (orientation:landscape){
+  .sbot{left:auto;top:0;width:min(250px,30vw);background:#0f1f16b8;align-content:start;overflow:auto;padding-top:calc(env(safe-area-inset-top,0px) + 12px)}
+  .stop{right:min(250px,30vw)}
+  .tcard{grid-template-columns:48px minmax(0,1fr)}
+  .tca{grid-column:1/-1;flex-direction:row}
+  .tca .sk{flex:1}
+  .slist{flex-wrap:wrap;overflow:visible}
+}
+@media (orientation:landscape){
+  #revlist{display:grid;grid-template-columns:repeat(auto-fill,minmax(330px,1fr));gap:0 18px}
+  .rv{padding:8px 0}
+  #scanrev h2{font-size:26px}
+}
+.tcard{grid-template-columns:48px minmax(0,1fr) auto;gap:8px 10px;padding:10px}
+.tcard #tci .ic{--s:48px}
+.tct b{font-size:17px}
+.tct span{font-size:13px}
+.tca .sk{min-width:72px;padding:0 12px}
+.tcn5{grid-column:1/-1;display:grid !important;grid-template-columns:repeat(5,minmax(0,1fr));gap:6px}
+.tcard .tcn5 button{min-width:0;height:46px}
+.sbot{gap:8px;padding-top:10px}
+.slist{min-height:44px}
+.sitem .ic{--s:34px}
+@media (orientation:landscape){.tca{grid-column:auto;flex-direction:column}.tcard{grid-template-columns:40px minmax(0,1fr) auto}.tcard #tci .ic{--s:40px}}
 </style>
 </head>
 <body>
@@ -309,9 +340,9 @@ body{padding-top:env(safe-area-inset-top,0px)}
 <div id="scan" hidden>
   <div id="scanlive">
     <div class="camwrap"><video id="cam" playsinline muted autoplay></video><canvas id="ov"></canvas>
-      <div class="stop"><p id="scanmsg"></p><button class="sx" id="scanx" aria-label="Kapat">×</button></div></div>
+      <div class="stop"><div class="stxt"><p id="scanmsg"></p><p class="shint" id="scanhint" hidden>Adres çubuğu yer kaplıyor. Safari'de Paylaş › Ana Ekrana Ekle yap, uygulamayı oradan aç: tam ekran olur.</p></div><button class="stog" id="scanauto" aria-pressed="true" hidden>Eller serbest: açık</button><button class="sx" id="scanx" aria-label="Kapat">×</button></div></div>
     <div class="sbot">
-      <div class="tcard" id="tcard" hidden><div id="tci"></div><div class="tct"><b id="tcn"></b><span id="tcs"></span><div class="cn" id="tcc"></div></div><div class="tca"><button class="go" id="tcadd">Ekle</button><button class="sk" id="tcskip">Geç</button></div></div>
+      <div class="tcard" id="tcard" hidden><div id="tci"></div><div class="tct"><b id="tcn"></b><span id="tcs"></span></div><div class="tca"><button class="go" id="tcadd" hidden>Ekle</button><button class="sk" id="tcskip">Geç</button></div><div class="cn tcn5" id="tcc"></div></div>
       <div class="srow"><span id="scancount"></span><button class="go" id="scandone" disabled>Bitti</button></div>
       <div class="slist" id="scanlist"></div>
     </div>
@@ -898,6 +929,7 @@ const io=new IntersectionObserver(en=>{en.forEach(x=>$('bar').classList.toggle('
 io.observe($('out'));
 /* Tek tek tarama: imlecin üstündeki malzemenin adını TV'den okur, kartla onaya sunar */
 let SMODE='grid',OCRW=null,OCRP=null,TEK={lastK:-1,streak:0,cur:null,added:{},skip:new Set()};
+try{TEK.auto=localStorage.getItem('botw-tek-auto')!=='0'}catch(_){TEK.auto=true}
 const nc=document.createElement('canvas'),nctx=nc.getContext('2d',{willReadFrequently:true}),oc=document.createElement('canvas'),octx=oc.getContext('2d',{willReadFrequently:true});
 const cc=document.createElement('canvas'),cctx=cc.getContext('2d',{willReadFrequently:true});
 const NORM=s=>s.toLowerCase().replace(/[^a-z' -]/g,'').replace(/\s+/g,' ').trim();
@@ -918,7 +950,35 @@ function getOCR(){
   OCRP.catch(()=>{OCRP=null});
   return OCRP;
 }
-function guideTek(vw,vh){return {x:vw*0.17,y:vh*0.27,w:vw*0.38,h:vh*0.56}}
+/* the guide is a horizontal strip: bring the item name (e.g. "Hearty Durian") into it */
+const TQ=new URLSearchParams(location.search);
+function guideTek(vw,vh){const port=vh>vw,cy=+TQ.get('sy')||(port?0.42:0.5),h=(+TQ.get('sh')||(port?0.2:0.26))*vh;return {x:vw*(port?0.04:0.1),y:vh*cy-h/2,w:vw*(port?0.92:0.8),h}}
+/* candidate text lines in the strip: white, unsaturated ink; tallest lines first */
+function lineCands(src,g){
+  const sc=Math.min(1.5,1400/g.w),W=Math.max(16,Math.round(g.w*sc)),H=Math.max(16,Math.round(g.h*sc));
+  nc.width=W;nc.height=H;nctx.drawImage(src,g.x,g.y,g.w,g.h,0,0,W,H);
+  const d=nctx.getImageData(0,0,W,H).data,hist=new Uint32Array(256);let tot=0;
+  for(let k=0;k<W*H;k+=2){const i=k*4;hist[Math.min(d[i],d[i+1],d[i+2])]++;tot++}
+  let acc=0,p99=255;for(let v=255;v>=0;v--){acc+=hist[v];if(acc>=tot*0.01){p99=v;break}}
+  const thr=Math.max(140,0.8*p99),B=new Uint8Array(W*H);
+  for(let k=0;k<W*H;k++){const i=k*4,mn=Math.min(d[i],d[i+1],d[i+2]),ma=Math.max(d[i],d[i+1],d[i+2]);B[k]=mn>thr&&ma-mn<50?1:0}
+  const th=Math.max(3,0.006*W),bands=[];let cur=null,gap=0;
+  for(let y=0;y<H;y++){let c=0;for(let x=0;x<W;x++)c+=B[y*W+x];
+    if(c>=th){if(!cur)cur=[y,y];else cur[1]=y;gap=0}else if(cur&&++gap>1){bands.push(cur);cur=null;gap=0}}
+  if(cur)bands.push(cur);
+  const out=[];
+  for(const [y0,y1] of bands){const bh=y1-y0+1;if(bh<8||bh>0.8*H||y0===0||y1>=H-1)continue;
+    const col=new Uint16Array(W);for(let y=y0;y<=y1;y++)for(let x=0;x<W;x++)col[x]+=B[y*W+x];
+    let best=null,st=-1,en=-1,ink=0,gp=0;
+    const close=()=>{if(st>=0&&en-st+1>=1.5*bh&&(!best||ink>best.ink))best={st,en,ink};st=-1;ink=0};
+    for(let x=0;x<W;x++){if(col[x]){if(st<0)st=x;en=x;ink+=col[x];gp=0}else if(st>=0&&++gp>1.1*bh)close()}
+    close();if(!best)continue;
+    const z=Math.max(1,44/bh),cw=Math.round((best.en-best.st+1+2*bh)*z),ch=Math.round(3*bh*z);
+    const cv=document.createElement('canvas');cv.width=cw;cv.height=ch;const cx=cv.getContext('2d');cx.fillStyle='#fff';cx.fillRect(0,0,cw,ch);cx.fillStyle='#000';
+    for(let y=y0;y<=y1;y++)for(let x=best.st;x<=best.en;x++)if(B[y*W+x])cx.fillRect(Math.floor((x-best.st+bh)*z),Math.floor((y-y0+bh)*z),Math.ceil(z),Math.ceil(z));
+    out.push({cv,bh,box:{x:g.x+best.st/sc,y:g.y+y0/sc,w:(best.en-best.st+1)/sc,h:bh/sc}})}
+  return out.sort((a,b)=>b.bh-a.bh).slice(0,3);
+}
 /* white, unsaturated name text -> black on white line image for the OCR */
 function nameCanvas(src,box){
   const sc=128/box.p,W=Math.max(8,Math.round(box.w*sc)),H=Math.max(8,Math.round(box.h*sc));
@@ -946,49 +1006,45 @@ function countAt(src,cell,k){
 let tekCtx=null;const TDBG=new URLSearchParams(location.search).get('dbg');const dbg=(...a)=>{if(TDBG)console.log('DBG',typeof tfi!=='undefined'?tfi:'',...a)};
 async function processTek(){
   const v=SRC||$('cam'),vw=srcW(v),vh=srcH(v);if(!vw)return;
-  if(vw<vh){scanLast=[];tekCtx=null;drawOverlay({rx:0,ry:0,k:1,g:{x:0,y:0,w:0,h:0}});setMsg('Telefonu yatay tut, TV ekranının tamamı görünsün.');return}
-  const g=guideTek(vw,vh),W=960,H=Math.round(vh*W/vw),k=vw/W;
-  work.width=W;work.height=H;wctx.drawImage(v,0,0,vw,vh,0,0,W,H);
-  const img={w:W,h:H,d:wctx.getImageData(0,0,W,H).data},m=0.08*g.w;
-  const roi={x0:Math.max(0,Math.round((g.x-m)/k)),y0:Math.max(0,Math.round((g.y-m)/k)),x1:Math.min(W,Math.round((g.x+g.w+m)/k)),y1:Math.min(H,Math.round((g.y+g.h+m)/k))};
-  const map={rx:0,ry:0,k,g};
-  const G=SC.grayGrad(img),pe=g.w/k/5,grid=SC.findGrid(img,G,roi,TEK.p?{pmin:0.92*TEK.p,pmax:1.08*TEK.p}:{pmin:0.6*pe,pmax:1.45*pe}),C=grid?SC.cells(img,G,grid,roi):[];
-  if(C.length<12){if(++TEK.miss>12)TEK.p=null;dbg('nogrid',C.length,grid&&grid.p);scanLast=[];tekCtx=null;drawOverlay(map);setMsg('Izgarayı kesikli kutuya oturt. Sağdaki ad yazısı da görünsün.');return}
-  const p=grid.p,gx1=Math.max(...C.map(c=>c.x))+C[0].c,gy0=Math.min(...C.map(c=>c.y));
-  const box={x:(gx1+0.3*p)*k,y:(gy0+2.2*p)*k,w:5.7*p*k,h:0.85*p*k,p:p*k};
-  box.w=Math.min(box.w,vw-box.x);box.h=Math.min(box.h,vh-box.y);
-  map.name=box;
-  if(box.w<2.6*p*k||box.h<0.6*p*k){dbg('nameout');scanLast=[];drawOverlay(map);setMsg('Sağdaki ad yazısı kadrajın dışında kaldı, biraz uzaklaş.');return}
-  scanLast=[];drawOverlay(map);
-  const line=nameCanvas(v,box);if(!line){if(++TEK.miss>12)TEK.p=null;dbg('noline p',p.toFixed(1),'gx1',gx1.toFixed(0),'gy0',gy0.toFixed(0));TEK.streak=0;setMsg('İmleci bir malzemenin üstüne getir.');return}
+  const g=guideTek(vw,vh),map={rx:0,ry:0,k:1,g,strip:true};
+  const cand=lineCands(v,g);map.lines=cand.map(c=>c.box);scanLast=[];drawOverlay(map);
+  if(!cand.length){setMsg('Oyundaki ad yazısını (ör. Hearty Durian) turuncu şeride getir.');return}
   let w;try{w=await getOCR()}catch(e){setMsg('Yazı okuyucu yüklenemedi. İnternete bağlanıp tekrar dene.');return}
-  const r=await w.recognize(line),mt=matchName((r.data.text||'').split('\n')[0]);dbg('ocr',JSON.stringify((r.data.text||'').trim()),mt&&SCAN_NAMES[mt.k],mt&&mt.e.toFixed(2),'p',p.toFixed(1),'C',C.length);
+  let mt=null;
+  for(const c of cand){const r=await w.recognize(c.cv),m=matchName((r.data.text||'').split('\n')[0]);
+    dbg('ocr',JSON.stringify((r.data.text||'').trim()),m&&SCAN_NAMES[m.k],m&&m.e.toFixed(2),'h',c.bh);
+    if(m&&(!mt||m.e<mt.e))mt=m;if(mt&&mt.e===0)break}
   /* a weak read neither counts nor breaks the run; a very clean read is enough on its own */
-  if(!mt||mt.e>0.34){if(++TEK.miss>12)TEK.p=null;setMsg('Ad okunuyor…');return}
-  TEK.p=p;TEK.miss=0;
-  dbg('streak',SCAN_NAMES[mt.k],TEK.lastK===mt.k?TEK.streak+1:1,'cur',TEK.cur&&SCAN_NAMES[TEK.cur.k]);
+  if(!mt||mt.e>0.34){setMsg('Ad okunuyor… Yazı şeridin içinde ve net olsun.');return}
   if(mt.k===TEK.lastK)TEK.streak++;else{TEK.lastK=mt.k;TEK.streak=1}
   if(TEK.streak<2&&(mt.e>0.12||AMBIG.has(mt.k))){setMsg('Ad okunuyor…');return}
   if(TEK.cur&&TEK.cur.k===mt.k)return;
-  /* the matching cell gives the count */
-  TEK.cur={k:mt.k,c:TEK.added[mt.k]||0,cell:null};
-  showCard();
+  TEK.cur={k:mt.k,c:TEK.added[mt.k]||0};
+  if(TEK.auto&&isFood(mt.k)&&!TEK.added[mt.k]){TEK.cur.c=5;tekAdd(true)}else showCard();
 }
+/* hands-free: a short beep says "added" so nobody has to look at the phone */
+let AC=null,WL=null;
+function initAudio(){try{if(navigator.audioSession)navigator.audioSession.type='playback'}catch(_){}try{AC=AC||new (window.AudioContext||window.webkitAudioContext)();AC.resume()}catch(_){}}
+function beep(){try{if(!AC)return;const t=AC.currentTime,o=AC.createOscillator(),g=AC.createGain();o.frequency.value=880;g.gain.setValueAtTime(0.0001,t);g.gain.exponentialRampToValueAtTime(0.3,t+0.01);g.gain.exponentialRampToValueAtTime(0.0001,t+0.14);o.connect(g).connect(AC.destination);o.start(t);o.stop(t+0.15)}catch(_){}}
+async function wake(on){try{if(on&&navigator.wakeLock&&!WL){WL=await navigator.wakeLock.request('screen');WL.addEventListener('release',()=>{WL=null})}else if(!on&&WL){await WL.release();WL=null}}catch(_){}}
 function showCard(){
   const t=TEK.cur,card=$('tcard');if(!t){card.hidden=true;return}
   card.hidden=false;const food=isFood(t.k),had=TEK.added[t.k];
-  $('tci').innerHTML=icp(t.k,56);$('tcn').textContent=SCAN_NAMES[t.k];
-  $('tcs').textContent=!food?'Pişirme malzemesi değil, eklenmez.':had?'Zaten ekli. Sayı değiştiyse yenisine dokun.':'Oyunda kaç tane var? Dokununca eklenir.';
-  $('tcc').innerHTML=food?[1,2,3,4,5].map(v=>'<button data-c="'+v+'" aria-pressed="'+(t.c===v)+'">'+(v===5?'5+':v)+'</button>').join(''):'';
-  $('tcadd').hidden=true;
-  setMsg(food?'Sayıya dokun, sonra oyunda bir sonraki malzemeye geç.':'Sonraki malzemeye geç.');
+  $('tci').innerHTML=icp(t.k,48);$('tcn').textContent=SCAN_NAMES[t.k];
+  $('tcs').textContent=!food?'Pişirme malzemesi değil, eklenmez.':had?(TEK.just===t.k?'Eklendi, 5+ sayıldı. Daha azsa sayıya dokun.':'Ekli. Sayı farklıysa dokun.'):'Oyunda kaç tane var? Dokununca eklenir.';
+  $('tcc').innerHTML=food?[1,2,3,4,5].map(v=>'<button data-c="'+v+'" aria-pressed="'+(had===v)+'">'+(v===5?'5+':v)+'</button>').join(''):'';
+  $('tcadd').hidden=true;$('tcskip').hidden=!food;$('tcskip').textContent=had?'Geri al':'Geç';
+  setMsg(!food?'Sonraki malzemeye geç.':had?SCAN_NAMES[t.k]+' eklendi. Sonraki malzemeye geç.':'Sayıya dokun, sonra oyunda bir sonraki malzemeye geç.');
 }
-function tekAdd(){const t=TEK.cur;if(!t||!t.c||!isFood(t.k))return;TEK.added[t.k]=t.c;
+function tekAdd(auto){const t=TEK.cur;if(!t||!t.c||!isFood(t.k))return;TEK.added[t.k]=t.c;
   scanObs[t.k]=scanObs[t.k]||{k:t.k,counts:{},sure:{},alts:{},first:0};scanObs[t.k].first=Date.now();scanObs[t.k].sure={[t.c]:9};ACC.add(t.k);
-  drawScanList();$('tcard').hidden=true;setMsg(SCAN_NAMES[t.k]+' eklendi. Oyunda bir sonraki malzemeye geç.')}
-$('tcc').addEventListener('click',ev=>{const b=ev.target.closest('button');if(!b||!TEK.cur)return;TEK.cur.c=+b.dataset.c;tekAdd()});
-$('tcadd').addEventListener('click',tekAdd);
-$('tcskip').addEventListener('click',()=>{if(TEK.cur)TEK.skip.add(TEK.cur.k);$('tcard').hidden=true;setMsg('Geçildi. Sonraki malzemeye geç.')});
+  drawScanList();
+  if(auto){TEK.just=t.k;beep();showCard()}else{TEK.just=null;$('tcard').hidden=true;setMsg(SCAN_NAMES[t.k]+' eklendi. Oyunda bir sonraki malzemeye geç.')}}
+function setAuto(v){TEK.auto=v;try{localStorage.setItem('botw-tek-auto',v?'1':'0')}catch(_){}$('scanauto').textContent='Eller serbest: '+(v?'açık':'kapalı');$('scanauto').setAttribute('aria-pressed',v)}
+$('tcc').addEventListener('click',ev=>{const b=ev.target.closest('button');if(!b||!TEK.cur)return;TEK.cur.c=+b.dataset.c;tekAdd(false)});
+$('tcadd').addEventListener('click',()=>tekAdd(false));
+$('tcskip').addEventListener('click',()=>{const t=TEK.cur;if(!t)return;if(TEK.added[t.k]){delete TEK.added[t.k];ACC.delete(t.k);drawScanList();setMsg(SCAN_NAMES[t.k]+' geri alındı.')}else{TEK.skip.add(t.k);setMsg('Geçildi. Sonraki malzemeye geç.')}TEK.just=null;$('tcard').hidden=true});
+$('scanauto').addEventListener('click',()=>setAuto(!TEK.auto));
 
 /* Kamerayla tarama: canlı kameradan envanter sayfalarını okuyup çantaya ekler.
    Her kutu için ayrı oy tutulur; bir malzeme ancak aynı kutuda art arda ve açık farkla kazanırsa eklenir.
@@ -1014,7 +1070,9 @@ const setMsg=t=>{$('scanmsg').textContent=t};
 function guide(vw,vh){let gw,gh;if(vw<vh){gw=vw*0.94;gh=gw/1.25}else{gh=vh*0.8;gw=Math.min(vw*0.92,gh*1.3)}return {x:(vw-gw)/2,y:(vh-gh)*(vw<vh?0.42:0.5),w:gw,h:gh}}
 const revLog=()=>console.log('TEKUNK '+[...(TEK.unk||[])].map(k=>SCAN_NAMES[k]).join(', '))||console.log('STAT frames '+nP+' nogrid '+nG+' moving '+nM+' voted '+scanFrames+' pages '+nE)||console.log('REV '+REV.filter(r=>r.on).length+' on / '+REV.length+' :: '+REV.map(r=>(r.on?'':'-')+SCAN_NAMES[r.k]+' '+(r.nocount?'?':r.c)).join(', '));
 async function openScan(keep,mode){
-  if(mode)SMODE=mode;if(keep!==true)TEK={lastK:-1,streak:0,cur:null,added:{},skip:new Set(),p:null,miss:0};$('tcard').hidden=true;
+  if(mode)SMODE=mode;if(keep!==true)TEK={lastK:-1,streak:0,cur:null,added:{},skip:new Set(),p:null,miss:0,auto:TEK.auto,just:null};initAudio();wake(true);
+  $('scanauto').hidden=SMODE!=='tek';setAuto(TEK.auto!==false);
+  const ios=/iPhone|iPad|iPod/.test(navigator.userAgent)||(navigator.platform==='MacIntel'&&navigator.maxTouchPoints>1),inst=navigator.standalone||matchMedia('(display-mode: standalone)').matches;$('scanhint').hidden=!(ios&&!inst);$('tcard').hidden=true;
   if(SMODE==='tek')getOCR().catch(()=>{});
   $('scan').hidden=false;$('scanrev').hidden=true;$('scanlive').hidden=false;document.body.style.overflow='hidden';
   if(keep!==true){scanObs={};slotH={};ACC=new Set();MAYBE=new Set();scanFrames=0}
@@ -1024,14 +1082,14 @@ async function openScan(keep,mode){
     const v=$('cam');SRC=v;
     if(TESTF){SRC=new Image();scanStream={getTracks:()=>[]};const TD=QS.get('dir')||'fr';
       const next=()=>new Promise(r=>{tfi++;if(tfi>TESTF){openReview();revLog();r(false);return}SRC.onload=()=>r(true);SRC.src=TD+'/'+String(tfi).padStart(3,'0')+'.jpg'});
-      const step=async()=>{if(!(await next()))return;if(SMODE==='tek'){await processTek();if(TEK.cur&&!$('tcard').hidden&&isFood(TEK.cur.k)&&!TEK.added[TEK.cur.k]){TEK.cur.c=5;tekAdd()}}else processFrame();setTimeout(step,0)};step();return}
+      const TDL=+QS.get('tdelay')||0;const step=async()=>{if(!(await next()))return;if(SMODE==='tek'){await processTek();if(TEK.cur&&!$('tcard').hidden&&isFood(TEK.cur.k)&&!TEK.added[TEK.cur.k]){TEK.cur.c=5;tekAdd(false)}}else processFrame();setTimeout(step,TDL)};step();return}
     if(TESTV){v.src=TESTV;v.muted=true;scanStream={getTracks:()=>[]};v.onended=()=>{openReview();revLog()};await v.play()}
     else{scanStream=await navigator.mediaDevices.getUserMedia({video:{facingMode:{ideal:'environment'},width:{ideal:1920},height:{ideal:1080}},audio:false});v.srcObject=scanStream;await v.play()}
-    setMsg(SMODE==='tek'?'Telefonu yatay tut. Izgarayı kesikli kutuya oturt, imleci malzemelerin üstünde gezdir.':'Malzemeler sayfasını çerçeveye sığdır. Her sayfada kutular yeşile dönene kadar sabit tut.');
+    setMsg(SMODE==='tek'?'Oyundaki ad yazısını turuncu şeride getir, imleci malzemelerin üstünde gezdir.':'Malzemeler sayfasını çerçeveye sığdır. Her sayfada kutular yeşile dönene kadar sabit tut.');
     loop();
   }catch(e){setMsg(location.protocol!=='https:'||!navigator.mediaDevices?'Kamera bu sayfada açılmıyor. Telefondaki uygulama sürümünü kullan.':'Kamera açılamadı. Ayarlar > Uygulamalar > Safari > Kamera iznini kontrol et.')}
 }
-function stopCam(){clearTimeout(scanTimer);scanTimer=null;if(scanStream){scanStream.getTracks().forEach(t=>t.stop());scanStream=null}}
+function stopCam(){wake(false);clearTimeout(scanTimer);scanTimer=null;if(scanStream){scanStream.getTracks().forEach(t=>t.stop());scanStream=null}}
 function closeScan(){stopCam();$('scan').hidden=true;document.body.style.overflow=''}
 async function loop(){
   if(!scanStream)return;
@@ -1092,8 +1150,10 @@ function drawOverlay(map){
   if(cv.width!==Math.round(r.width*dpr)||cv.height!==Math.round(r.height*dpr)){cv.width=Math.round(r.width*dpr);cv.height=Math.round(r.height*dpr)}
   const x=cv.getContext('2d'),v=SRC||$('cam'),vw=srcW(v),vh=srcH(v);x.clearRect(0,0,cv.width,cv.height);if(!vw)return;
   const sc=Math.max(cv.width/vw,cv.height/vh),ox=(cv.width-vw*sc)/2,oy=(cv.height-vh*sc)/2,P=(a,b)=>[ox+a*sc,oy+b*sc];
-  const g=map.g,[gx,gy]=P(g.x,g.y);x.setLineDash([10*dpr,8*dpr]);x.lineWidth=2*dpr;x.strokeStyle='#ffffffb0';if(g.w)x.strokeRect(gx,gy,g.w*sc,g.h*sc);
+  const g=map.g,[gx,gy]=P(g.x,g.y);x.setLineDash([10*dpr,8*dpr]);x.lineWidth=2*dpr;x.strokeStyle='#ffffffb0';if(g.w&&!map.strip)x.strokeRect(gx,gy,g.w*sc,g.h*sc);
   if(map.name){const [nx,ny]=P(map.name.x,map.name.y);x.strokeStyle='#ff7a1ad0';x.strokeRect(nx,ny,map.name.w*sc,map.name.h*sc)}x.setLineDash([]);
+  if(map.strip){x.lineWidth=3*dpr;x.strokeStyle='#ff7a1a';x.setLineDash([14*dpr,8*dpr]);x.strokeRect(gx,gy,g.w*sc,g.h*sc);x.setLineDash([])}
+  (map.lines||[]).forEach(b=>{const [lx,ly]=P(b.x,b.y);x.lineWidth=2.5*dpr;x.strokeStyle='#3ddc6b';x.strokeRect(lx-4*dpr,ly-4*dpr,b.w*sc+8*dpr,b.h*sc+8*dpr)});
   scanLast.forEach(o=>{if(o.st==='empty')return;const [a,b]=P(map.rx+o.c.x*map.k,map.ry+o.c.y*map.k),z=o.c.c*map.k*sc;
     x.lineWidth=(o.st==='ok'?4:2.5)*dpr;x.strokeStyle=o.st==='ok'?'#3ddc6b':'#ffd23f';x.strokeRect(a,b,z,z)});
 }
@@ -1112,7 +1172,7 @@ function openReview(){
 }
 function drawReview(){
   const on=REV.filter(r=>r.on),nc=on.filter(r=>r.nocount).length,off=REV.length-on.length;
-  $('revsum').textContent=on.length+' malzeme eklenecek.'+(nc?' Sayısını okuyamadığım '+nc+' tanesinin sayısını seç.':'')+(off?' Emin olamadığım '+off+' malzeme en altta, eklenmeyecek. Gerçekten varsa + ile ekle.':'');
+  $('revsum').textContent=(SMODE==='tek'&&TEK.auto?on.length+' malzeme okundu, hepsi 5+ sayıldı. Liste oyundaki sırayla; elinde 5\'ten az olanların sayısına dokun.':on.length+' malzeme eklenecek.')+(nc?' Sayısını okuyamadığım '+nc+' tanesinin sayısını seç.':'')+(off?' Emin olamadığım '+off+' malzeme en altta, eklenmeyecek. Gerçekten varsa + ile ekle.':'');
   $('revlist').innerHTML=REV.length?REV.map((r,n)=>'<div class="rv'+(r.on?(r.nocount?' un':''):' off')+'" data-n="'+n+'">'+icp(r.k,44)+'<div class="rvt"><b>'+esc(SCAN_NAMES[r.k])+'</b>'+
     (!r.on?'<span class="rvw">Emin değilim, eklenmeyecek.</span>':r.nocount?'<span class="rvw">Sayıyı okuyamadım, seç.</span>':'')+
     (r.on?'<div class="cn">'+[1,2,3,4,5].map(v=>'<button data-c="'+v+'" aria-pressed="'+(!r.nocount&&r.c===v)+'">'+(v===5?'5+':v)+'</button>').join('')+'</div>':'')+
