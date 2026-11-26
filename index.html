@@ -248,6 +248,26 @@ body{padding-top:env(safe-area-inset-top,0px)}
 .slist{min-height:44px}
 .sitem .ic{--s:34px}
 @media (orientation:landscape){.tca{grid-column:auto;flex-direction:column}.tcard{grid-template-columns:40px minmax(0,1fr) auto}.tcard #tci .ic{--s:40px}}
+.ppanel{display:grid;gap:8px;background:#1d3a2a;border-radius:14px;padding:10px}
+.ppanel[hidden]{display:none}
+.pgrid{display:grid;gap:4px}
+.pc{position:relative;aspect-ratio:1;border:2px solid #ffffff22;border-radius:10px;background:#0f1f16;display:grid;place-items:center;cursor:pointer;padding:0}
+.pc .ic{--s:min(44px,11vw)}
+.pc b{position:absolute;right:2px;bottom:2px;background:#ff7a1a;color:#1b0c00;font-size:13px;border-radius:999px;padding:0 5px;line-height:1.35}
+.pc b.q{background:#ffd23f}
+.pc.un{border-color:#ffd23f}
+.pc.nf{opacity:.45}
+.pc.pe{border-style:dashed;background:transparent}
+.pc.sel{border-color:#fff;box-shadow:0 0 0 2px #fff}
+.pedit{display:grid;gap:6px;color:#fff}
+.pedit[hidden]{display:none}
+.pedit .cn button{background:#0f1f16;color:#fff;border-color:#ffffff40;min-width:0;flex:1}
+.pedit .cn{display:flex}
+.pedit .cn button[aria-pressed=true]{background:var(--fire);color:#1b0c00;border-color:var(--fire)}
+.pedit .alts{color:#cfe0d4}
+.pacts{display:flex;gap:8px}
+.pacts .go{flex:2;margin:0;min-height:46px;font-size:16px}
+.pacts .sk{flex:1}
 </style>
 </head>
 <body>
@@ -298,7 +318,7 @@ body{padding-top:env(safe-area-inset-top,0px)}
     </div>
 
     <div id="p-env" hidden>
-      <div class="envhead"><p id="envn"></p><div class="eacts"><button class="go" id="scanbtn">Kamerayla tek tek tara</button><button class="btn2" id="scanbtn2">Sayfa sayfa</button><button class="btn2" id="envclr">Temizle</button></div></div>
+      <div class="envhead"><p id="envn"></p><div class="eacts"><button class="go" id="scanbtn">Kamerayla tara</button><button class="btn2" id="scanbtn2">Tek tek (adından)</button><button class="btn2" id="envclr">Temizle</button></div></div>
       <h3 class="sub">Bunlarla yapabileceğin en iyiler</h3>
       <div class="cards" id="gcards"></div>
       <p class="miss" id="miss"></p>
@@ -343,6 +363,7 @@ body{padding-top:env(safe-area-inset-top,0px)}
       <div class="stop"><div class="stxt"><p id="scanmsg"></p><p class="shint" id="scanhint" hidden>Adres çubuğu yer kaplıyor. Safari'de Paylaş › Ana Ekrana Ekle yap, uygulamayı oradan aç: tam ekran olur.</p></div><button class="stog" id="scanauto" aria-pressed="true" hidden>Eller serbest: açık</button><button class="sx" id="scanx" aria-label="Kapat">×</button></div></div>
     <div class="sbot">
       <div class="tcard" id="tcard" hidden><div id="tci"></div><div class="tct"><b id="tcn"></b><span id="tcs"></span></div><div class="tca"><button class="go" id="tcadd" hidden>Ekle</button><button class="sk" id="tcskip">Geç</button></div><div class="cn tcn5" id="tcc"></div></div>
+      <div class="ppanel" id="ppanel" hidden><div class="pgrid" id="pgrid"></div><div class="pedit" id="pedit" hidden></div><div class="pacts"><button class="go" id="pok">Doğru, ekle</button><button class="sk" id="pre">Tekrar oku</button></div></div>
       <div class="srow"><span id="scancount"></span><button class="go" id="scandone" disabled>Bitti</button></div>
       <div class="slist" id="scanlist"></div>
     </div>
@@ -1054,6 +1075,7 @@ const QS0=new URLSearchParams(location.search);
 const DIGITS=[{"d":1,"f":[1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,0,1,1,1,1,1,1,0,1,1,1,1,1,1,0,1,1,1,1,1,1,0,1,1,1,1,1,1,1,1,1,1,1,1,1,0.67,1,1,1,1,1,0],"ar":0.28},{"d":7,"f":[0,0,0,0,0,0,0,1,1,1,1,1,1,1,1,1,1,1,1,1,1,0,0,0.5,0.25,1,1,1,0,0,0,0.25,1,1,1,0,0,0,0.83,1,1,1,0,0,1,1,1,1,0.5,0,0.5,1,1,1,1,0,0,0.67,1,1,1,0.33,0,0,1,1,1,1,0,0,0.33,1,1,1,0.67,0,0],"ar":0.423},{"d":9,"f":[0,0,0.33,0.5,0.5,0.33,0,0,0.5,1,1,1,1,0.17,0,1,1,1,1,1,0.67,0.5,1,0.89,0.33,0.22,1,1,0.5,1,0.67,0,0,1,1,0.5,1,0.83,0.25,0.67,1,1,0.25,1,1,1,1,1,1,0,0.33,1,1,1,1,1,0.5,1,0.17,0,0.5,1,0.67,1,1,1,1,1,1,0.33,0.17,1,1,1,1,0.67,0],"ar":0.76},{"d":1,"f":[1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,0,1,1,1,1,1,1,1,1,1,1,1,1,0.5,1,1,1,1,1,1,0.33,1,1,1,1,1,1,0,1,1,1,1,1,1,0,0.67,1,1,1,1,0.67,0],"ar":0.28},{"d":2,"f":[0,0,0.25,0.67,1,0.83,0.17,0,0.33,1,1,1,1,0.83,0,0.89,1,1,0.67,1,1,0.5,1,1,0.17,0,1,1,0,0.67,0.5,0,0.75,1,1,0,0,0.5,0.78,1,1,0.67,0,0.5,1,1,1,0.67,0,0.25,1,1,1,0.5,0,0,0.83,1,1,0.44,0.67,0.67,0.22,1,1,1,1,1,1,1,0.83,1,1,1,1,1,0.56],"ar":0.692},{"d":1,"f":[0,0,0,0.5,0.5,1,0.5,0.5,0.5,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,0.5,0.5,1,1,1,1,1,0.5,0.5,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,0.67,0.67,1,1,1,1,0.33],"ar":0.24},{"d":2,"f":[0,0,0,0.5,0.5,0.5,0,0,0,0.83,1,1,1,0.83,0,0.5,1,1,1,1,1,0,0.83,1,0.83,0.22,1,1,0,0.25,0.83,0,0.17,1,1,0,0,0,0.5,1,1,1,0,0,0.5,1,1,1,0.5,0,0.5,1,1,0.67,0.17,0,0.25,1,1,0.5,0.17,0,0,0.5,1,1,1,1,1,0.83,0.83,1,1,1,1,1,0.89],"ar":0.68},{"d":8,"f":[0,0,0.17,0.83,1,0.67,0.67,0,0.17,1,1,1,1,0.5,0,0.67,1,1,1,1,1,0,1,1,0.56,0.33,1,1,0,0.83,1,1,1,1,1,0,0.67,1,1,1,1,0.67,0.25,1,1,1,1,1,0.83,0.67,1,0.89,0.44,0.56,1,1,1,1,0.83,0,0.5,1,1,0.75,1,1,1,1,1,0.83,0.17,0.89,1,1,1,0.89,0.22],"ar":0.8},{"d":4,"f":[0,0,0,0,0.5,0.83,0.33,0,0,0,0.17,1,1,0.17,0,0,0,0.89,1,1,0.33,0,0,0.5,1,1,1,0.17,0,0.17,1,1,1,1,0,0,0.67,1,0.78,1,1,0,0.5,1,1,0.83,1,1,0.5,1,1,1,1,1,1,1,0.5,1,1,0.89,1,1,0.56,0,0,0,0.33,1,0.67,0,0,0,0,0.11,0.67,0.22,0],"ar":0.769},{"d":1,"f":[0,0,0,0.5,0.5,1,0.5,0.5,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,0.5,1,1,1,1,1,1,0,1,1,1,1,1,1,0,1,1,1,1,1,0.75,0,1,1,1,1,1,0.5,0,1,1,1,1,1,0.5,1,1,1,1,1,1,0.5,0.33,1,1,1,1,1,0],"ar":0.32},{"d":2,"f":[0,0,0,0.25,0.5,0.17,0,0,0,0.83,1,1,1,0.5,0,0.56,1,1,1,1,1,0,1,1,0.75,0,1,1,0,0.67,1,0,0.17,1,1,0,0,0.22,0.5,0.89,1,1,0,0,0.83,1,1,1,0.33,0,0.5,1,1,0.83,0.33,0,0.17,1,1,0.5,0.11,0,0,0.75,1,1,1,1,1,0.5,0.67,1,1,1,1,1,0.89],"ar":0.731},{"d":6,"f":[0,0,0,0.5,0.5,0.17,0,0,0,0.83,1,1,1,0.5,0,0.67,1,1,1,1,0.89,0,1,1,0.5,0,0.83,0.83,0.5,1,1,1,1,0.67,0,1,1,1,1,1,1,0.44,1,1,1,0.5,0.67,1,0.83,1,1,0.67,0,0.33,1,0.83,1,1,0.78,0,0.67,1,0.67,0.5,1,1,1,1,1,0.5,0,0.67,1,1,1,0.67,0],"ar":0.731},{"d":8,"f":[0,0,0,0,0.17,1,1,0,0,0.56,0.67,1,1,1,0,0.67,1,1,1,1,1,0,1,1,0.5,0.33,1,1,0,1,1,0.75,0.67,1,1,0,0.89,1,1,1,1,0.67,0.5,1,1,1,1,1,0.83,1,1,0.78,0.17,0.33,1,1,1,1,0.67,0,0.5,1,1,0.67,1,1,1,1,1,0.56,0,0.44,0.89,1,0.89,0.56,0],"ar":0.679},{"d":1,"f":[0,0,0,0,0.5,0.5,0,0,0.5,0.5,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,0,0.5,1,1,1,1,1,0,1,1,1,1,1,0.75,0,1,1,1,1,1,0.5,0,1,1,1,1,1,0.5,0,1,1,1,1,1,0.5,0.67,1,1,1,1,1,0],"ar":0.36},{"d":3,"f":[0,0,0,0.5,0.5,0.5,0,0,0.17,0.83,1,1,1,0.83,0,0.56,1,1,0.67,1,1,0,0.5,1,0.25,0,1,1,0,0,0,0.5,0.67,1,1,0,0,0.67,1,1,1,0.56,0,0,0.33,1,1,1,0.83,0,0,0,0,0.17,1,1,0.5,1,0.33,0,0.44,1,1,0.5,1,1,1,1,1,0.67,0,0.56,1,1,1,0.78,0.11],"ar":0.731},{"d":1,"f":[0,0,0,0.5,0.5,0.5,0.25,0.5,0.5,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,0,1,1,1,1,1,1,0.5,1,1,1,1,1,0.75,1,1,1,1,1,1,0.5,1,1,1,1,1,1,0.5,1,1,1,1,1,1,0.25,1,1,1,1,1,1,0],"ar":0.32},{"d":2,"f":[0,0.17,0.5,1,1,1,0.83,0,0,0.67,1,1,1,1,0,0.56,1,1,1,1,1,0,1,1,0.75,0,1,1,0,0.5,1,0,0.17,1,1,0,0,0.11,0.5,0.89,1,0.78,0,0,0.83,1,1,1,0,0,0.67,1,1,0.83,0.17,0,0.33,1,1,0.83,0.33,0.33,0.11,0.75,1,1,1,1,1,0.83,0.83,1,1,1,1,1,0.67],"ar":0.731},{"d":6,"f":[0,0,0,0.5,0.5,0.33,0,0,0.17,1,1,1,1,0.5,0,0.67,1,1,1,1,0.89,0.5,1,1,1,1,1,0.83,0.75,1,1,1,1,0.83,0,1,1,1,1,1,1,0.56,1,1,1,0.75,0.83,1,1,1,1,0.67,0,0.33,1,1,1,1,0.78,0.33,0.89,1,0.78,0.75,1,1,1,1,1,0.33,0.17,0.78,1,1,1,0.67,0],"ar":0.731},{"d":3,"f":[0,0,0.33,0.75,1,0.67,0,0,0.33,1,1,1,1,0.5,0,0.83,1,1,1,1,1,0,0.67,0.89,0.5,0.78,1,1,0,0,0.67,1,1,1,0.83,0,0,1,1,1,1,0.33,0,0,0.83,1,1,1,0.67,0.17,0.33,0.22,0.33,0.56,1,1,1,1,0.83,0.5,0.83,1,0.67,1,1,1,1,1,1,0.5,0.17,0.89,1,1,1,0.78,0],"ar":0.76},{"d":1,"f":[0,0,0,0,0,0.5,0.25,0,0,0.5,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,0,1,1,1,1,1,1,0,1,1,1,1,1,1,0,1,1,1,1,1,1,0.67,1,1,1,1,1,0.83,1,1,1,1,1,1,0.5,0.33,0.67,1,1,1,0.67,0.33],"ar":0.308},{"d":2,"f":[0,0,0,0.25,0.5,0.17,0,0,0.17,0.83,1,1,1,0.67,0,0.83,1,1,1,1,1,0,1,1,1,0.89,1,1,0,0.83,1,0.75,0.67,1,1,0,0,0,0.25,1,1,1,0,0.17,0.83,1,1,1,0.83,0,0.67,1,1,1,0.78,0.22,0.5,1,1,1,0.33,0,0,1,1,1,1,1,0.5,0.33,1,1,1,1,1,1,1],"ar":0.76},{"d":1,"f":[0,0,0,0.25,0,0,0,0,0.5,1,1,1,1,0.75,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,0.5,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,0.67,1,1,1,1,1,1,0.5,1,1,1,1,1,1,0.5,1,1,1,1,1,1,0],"ar":0.36},{"d":1,"f":[0,0,0,0,0,0,0.5,0,0.33,0.67,0.67,0.67,0.67,0.5,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,0.5,1,1,1,1,1,1,0.5,0.67,1,1,1,1,0.67,0.17],"ar":0.357},{"d":2,"f":[0,0,0,0,0.5,0,0,0,0,0.67,1,1,1,0.5,0,0.33,1,1,1,1,1,0,0.67,1,1,0.78,1,1,0,0.33,1,0.83,1,1,1,0,0,0,0.5,1,1,1,0,0,0.67,1,1,1,0.5,0,0.56,1,1,0.89,0.44,0,0.25,1,1,0.83,0.17,0,0,0.5,1,1,1,1,0.67,0.33,0.67,1,1,1,1,1,1],"ar":0.8},{"d":3,"f":[0,0,0,0.5,0.5,0.17,0,0,0.17,0.83,1,1,1,0.5,0,0.67,1,1,1,1,1,0,0.89,1,1,0.89,1,1,0,0,0.83,0.5,1,1,1,0,0.17,0.83,1,1,1,0.83,0,0.17,1,1,1,1,0.83,0,0.11,0.22,0.5,0.89,1,1,0.75,1,0.83,0.25,0.83,1,1,1,1,1,1,1,1,0.83,0.33,1,1,1,1,1,0.33],"ar":0.76},{"d":2,"f":[0,0,0.17,0.5,0.5,0.5,0,0,0.17,1,1,1,1,0.83,0,0.83,1,1,1,1,1,0,1,1,0.78,0.67,1,1,0,0.17,0.67,0.17,0.83,1,1,0,0,0.17,0.83,1,1,0.83,0,0.17,0.83,1,1,1,0.5,0,0.89,1,1,0.78,0.22,0,0.33,1,1,0.83,0,0,0,0.67,1,1,1,1,1,0.67,0.89,1,1,1,1,1,1],"ar":0.84},{"d":2,"f":[0,0,0.5,1,1,1,0.67,0,0.17,1,1,1,1,1,0,0.67,1,1,0.83,1,1,0,0.83,1,0.83,0.5,1,1,0,0,0.5,0.33,1,1,1,0,0,0.17,1,1,1,0.83,0,0.17,1,1,1,1,0.17,0,0.5,1,1,1,0.33,0,0,1,1,1,0.17,0,0,0.5,1,1,1,1,1,0.67,0.83,1,1,1,1,1,1],"ar":0.87},{"d":2,"f":[0,0,0.17,0.5,1,0.83,0.33,0,0.17,1,1,1,1,1,0,0.67,1,1,1,1,1,0,1,1,1,0.67,1,1,0,0.33,0.5,0.25,0.83,1,1,0,0,0.33,0.75,1,1,1,0,0.17,1,1,1,1,0.5,0,0.89,1,1,0.89,0.22,0,0.5,1,1,1,0.33,0.5,0,1,1,1,1,1,1,1,0.67,1,1,1,1,1,0.89],"ar":0.76},{"d":3,"f":[0,0.17,0.67,1,1,0.83,0.17,0,0.83,1,1,1,1,0.67,0.33,1,1,1,1,1,1,0.33,0.67,1,0.78,1,1,1,0,0.17,0.67,1,1,1,0.83,0,0.33,1,1,1,1,0.33,0,0.33,1,1,1,1,0.5,0.22,0.33,0.11,0.44,1,1,1,1,1,0.5,0.67,1,1,0.83,1,1,1,1,1,1,0.67,0.78,1,1,1,1,0.89,0.11],"ar":0.84},{"d":8,"f":[0,0,0.67,1,1,0.5,0,0,0.83,1,1,1,1,0.83,0.17,1,1,1,1,1,1,0.56,1,1,0.67,0.89,1,1,0.33,1,1,1,1,1,0.83,0.17,1,1,1,1,1,0.67,0.67,1,1,1,1,1,0.83,1,1,1,0.56,1,1,1,1,1,1,0.67,1,1,0.83,1,1,1,1,1,1,0.5,0.33,1,1,1,1,0.78,0],"ar":0.84},{"d":3,"f":[0,0,0.33,0.67,1,0.5,0,0,0.5,1,1,1,1,0.5,0,1,1,1,1,1,1,0.11,0.89,1,0.89,1,1,1,0,0,0.67,1,1,1,0.83,0,0.33,1,1,1,1,0.5,0,0.17,1,1,1,1,0.5,0,0,0.22,0.33,1,1,1,1,1,0.83,0.67,1,1,0.83,1,1,1,1,1,1,0.5,0.33,1,1,1,1,0.89,0.11],"ar":0.84},{"d":5,"f":[0,0,0.33,0.5,0.5,0.5,0.33,0,0.83,1,1,1,1,0.67,0.5,1,1,1,1,1,0.78,0.5,1,1,1,1,0.33,0,1,1,1,1,1,1,0.17,1,1,1,1,1,1,0.78,0.75,1,1,0.75,1,1,1,0.5,0.83,0.5,0,0.83,1,1,1,1,0.67,0.5,1,1,0.89,1,1,1,1,1,1,0.33,0.33,0.78,1,1,1,0.56,0],"ar":0.731}];
 const PRM=Object.assign({dec:1,acc:3,share:0.6,may:2,mshare:0.4,mv:0.3,chg:0.5},JSON.parse(QS0.get('prm')||'{}'));
 const DEC=PRM.dec,ACC_MIN=PRM.acc,ACC_SHARE=PRM.share,MAY_MIN=PRM.may,MAY_SHARE=PRM.mshare;
+let PAGE=null,PDONE=false,lastSig=null,nPages=0,epochN=0,slotCnt={},slotAlt={},PSEL=-1,pgTimer=null;
 let scanRefs=null,scanStream=null,scanTimer=null,scanObs={},slotH={},prevG=null,prevA=null,nE=0,ACC=new Set(),MAYBE=new Set(),scanFrames=0,scanLast=[],REV=[];
 const work=document.createElement('canvas'),hiC=document.createElement('canvas');
 const wctx=work.getContext('2d',{willReadFrequently:true}),hctx=hiC.getContext('2d',{willReadFrequently:true});
@@ -1071,21 +1093,21 @@ function guide(vw,vh){let gw,gh;if(vw<vh){gw=vw*0.94;gh=gw/1.25}else{gh=vh*0.8;g
 const revLog=()=>console.log('TEKUNK '+[...(TEK.unk||[])].map(k=>SCAN_NAMES[k]).join(', '))||console.log('STAT frames '+nP+' nogrid '+nG+' moving '+nM+' voted '+scanFrames+' pages '+nE)||console.log('REV '+REV.filter(r=>r.on).length+' on / '+REV.length+' :: '+REV.map(r=>(r.on?'':'-')+SCAN_NAMES[r.k]+' '+(r.nocount?'?':r.c)).join(', '));
 async function openScan(keep,mode){
   if(mode)SMODE=mode;if(keep!==true)TEK={lastK:-1,streak:0,cur:null,added:{},skip:new Set(),p:null,miss:0,auto:TEK.auto,just:null};initAudio();wake(true);
-  $('scanauto').hidden=SMODE!=='tek';setAuto(TEK.auto!==false);
+  $('scanauto').hidden=false;setAuto(TEK.auto!==false);$('ppanel').hidden=true;PAGE=null;clearTimeout(pgTimer);
   const ios=/iPhone|iPad|iPod/.test(navigator.userAgent)||(navigator.platform==='MacIntel'&&navigator.maxTouchPoints>1),inst=navigator.standalone||matchMedia('(display-mode: standalone)').matches;$('scanhint').hidden=!(ios&&!inst);$('tcard').hidden=true;
   if(SMODE==='tek')getOCR().catch(()=>{});
   $('scan').hidden=false;$('scanrev').hidden=true;$('scanlive').hidden=false;document.body.style.overflow='hidden';
-  if(keep!==true){scanObs={};slotH={};ACC=new Set();MAYBE=new Set();scanFrames=0}
-  prevG=null;prevA=null;slotH={};scanLast=[];drawScanList();setMsg('Kamera açılıyor…');
+  if(keep!==true){scanObs={};slotH={};ACC=new Set();MAYBE=new Set();scanFrames=0;lastSig=null;nPages=0}
+  prevG=null;prevA=null;slotH={};slotCnt={};slotAlt={};epochN=0;PDONE=false;scanLast=[];drawScanList();setMsg('Kamera açılıyor…');
   try{
     await loadRefs();
     const v=$('cam');SRC=v;
     if(TESTF){SRC=new Image();scanStream={getTracks:()=>[]};const TD=QS.get('dir')||'fr';
       const next=()=>new Promise(r=>{tfi++;if(tfi>TESTF){openReview();revLog();r(false);return}SRC.onload=()=>r(true);SRC.src=TD+'/'+String(tfi).padStart(3,'0')+'.jpg'});
-      const TDL=+QS.get('tdelay')||0;const step=async()=>{if(!(await next()))return;if(SMODE==='tek'){await processTek();if(TEK.cur&&!$('tcard').hidden&&isFood(TEK.cur.k)&&!TEK.added[TEK.cur.k]){TEK.cur.c=5;tekAdd(false)}}else processFrame();setTimeout(step,TDL)};step();return}
+      const TDL=+QS.get('tdelay')||0;const step=async()=>{if(!(await next()))return;if(PAGE&&!QS.get('hold'))confirmPage();if(SMODE==='tek'){await processTek();if(TEK.cur&&!$('tcard').hidden&&isFood(TEK.cur.k)&&!TEK.added[TEK.cur.k]){TEK.cur.c=5;tekAdd(false)}}else processFrame();setTimeout(step,TDL)};step();return}
     if(TESTV){v.src=TESTV;v.muted=true;scanStream={getTracks:()=>[]};v.onended=()=>{openReview();revLog()};await v.play()}
     else{scanStream=await navigator.mediaDevices.getUserMedia({video:{facingMode:{ideal:'environment'},width:{ideal:1920},height:{ideal:1080}},audio:false});v.srcObject=scanStream;await v.play()}
-    setMsg(SMODE==='tek'?'Oyundaki ad yazısını turuncu şeride getir, imleci malzemelerin üstünde gezdir.':'Malzemeler sayfasını çerçeveye sığdır. Her sayfada kutular yeşile dönene kadar sabit tut.');
+    setMsg(SMODE==='tek'?'Oyundaki ad yazısını turuncu şeride getir, imleci malzemelerin üstünde gezdir.':'Malzemeler sayfasını kesikli çerçeveye sığdır ve sabit tut. Sayfa okununca telefonda gösterilecek.');
     loop();
   }catch(e){setMsg(location.protocol!=='https:'||!navigator.mediaDevices?'Kamera bu sayfada açılmıyor. Telefondaki uygulama sürümünü kullan.':'Kamera açılamadı. Ayarlar > Uygulamalar > Safari > Kamera iznini kontrol et.')}
 }
@@ -1102,6 +1124,7 @@ function decayAll(f){for(const s in slotH){const H=slotH[s];for(const k in H)H[k
 function leader(H){let k=null,v=0,t=0;for(const q in H){t+=H[q];if(q!=='u'&&q!=='e'&&H[q]>v){v=H[q];k=+q}}return {k,v,t}}
 function processFrame(){
   const v=SRC||$('cam'),vw=srcW(v),vh=srcH(v);if(!vw)return;
+  if(PAGE)return;
   const g=guide(vw,vh),mx=g.w*0.04,my=g.h*0.05;
   const rx=Math.max(0,g.x-mx),ry=Math.max(0,g.y-my),rw=Math.min(vw-rx,g.w+2*mx),rh=Math.min(vh-ry,g.h+2*my);
   const W=540,Hh=Math.round(rh*W/rw);work.width=W;work.height=Hh;wctx.drawImage(v,rx,ry,rw,rh,0,0,W,Hh);
@@ -1111,7 +1134,7 @@ function processFrame(){
   const G=SC.grayGrad(img),grid=SC.findGrid(img,G),C=grid?SC.cells(img,G,grid):[];
   if(C.length<6){nG++;prevG=null;scanLast=[];drawOverlay(map);setMsg('Izgara aranıyor… Malzemeler sayfası çerçevenin içinde olsun.');return}
   const cl=C.map(c=>({c,...SC.classify(img,c,scanRefs)}));
-  const full=cl.filter(o=>o.std>=22);
+  const full=cl.filter(o=>o.std>=14);
   const mb=full.reduce((a,o)=>a+Math.max(...o.sc),0)/Math.max(1,full.length);
   if(!full.length||mb<0.42){nG++;prevG=null;scanLast=[];drawOverlay(map);setMsg('Izgara net değil. Biraz yaklaş, ekrana dik tut.');return}
   /* a moving grid (page sliding, shaking hand) gives no votes */
@@ -1119,32 +1142,90 @@ function processFrame(){
   const ox=map.rx+(grid.x+i0*grid.p)*map.k,oy=map.ry+(grid.y+j0*grid.p)*map.k;
   const moving=prevG&&(Math.abs(ox-prevG.x)>PRM.mv*pv||Math.abs(oy-prevG.y)>PRM.mv*pv||Math.abs(pv-prevG.p)>0.06*pv);
   prevG={x:ox,y:oy,p:pv};
-  if(moving){nM++;slotH={};prevA=null;scanLast=cl.map(o=>({c:o.c,st:o.std<22?'empty':'wait'}));drawOverlay(map);setMsg('Görüntü kayıyor, telefonu sabit tut.');return}
+  if(moving){if(QS.get('dbg'))console.log('DBG '+tfi+' moving');nM++;slotH={};slotCnt={};slotAlt={};epochN=0;PDONE=false;prevA=null;scanLast=cl.map(o=>({c:o.c,st:o.std<14?'empty':'wait'}));drawOverlay(map);setMsg('Görüntü kayıyor, telefonu sabit tut.');return}
   const HW=Math.min(1280,Math.round(rw)),HH=Math.round(rh*HW/rw);hiC.width=HW;hiC.height=HH;hctx.drawImage(v,rx,ry,rw,rh,0,0,HW,HH);
   const hi={w:HW,h:HH,d:hctx.getImageData(0,0,HW,HH).data},s=HW/W;
   const dp=SC.orderDP(full);scanFrames++;
   const key=o=>(o.c.i-i0)+','+(o.c.j-j0);
   /* a new page starts a fresh round of votes: most slots read differently from the previous frame */
   const A={};full.forEach((o,q)=>{const it=dp.items[q],v0=o.sc[it];let rank=0;for(let z=0;z<o.sc.length;z++)if(o.sc[z]>v0)rank++;o.item=it;o.rank=rank;A[key(o)]=rank<5?it:'u'});
-  cl.filter(o=>o.std<22).forEach(o=>{A[key(o)]='e'});
-  if(prevA){let n=0,d=0;for(const q in A)if(q in prevA){n++;if(A[q]!==prevA[q])d++}if(!n||d/n>=PRM.chg){slotH={};nE++}}else{slotH={};nE++}
+  cl.filter(o=>o.std<14).forEach(o=>{A[key(o)]='e'});
+  const reset=()=>{slotH={};slotCnt={};slotAlt={};epochN=0;PDONE=false;nE++};
+  if(prevA){let n=0,d=0;for(const q in A)if(q in prevA){n++;if(A[q]!==prevA[q])d++}if(!n||d/n>=PRM.chg)reset()}else reset();
+  epochN++;
   prevA=A;
-  cl.filter(o=>o.std<22).forEach(o=>{const H=slotH[key(o)]||(slotH[key(o)]={});H.e=(H.e||0)+1});
+  cl.filter(o=>o.std<14).forEach(o=>{const H=slotH[key(o)]||(slotH[key(o)]={});H.e=(H.e||0)+1});
   full.forEach(o=>{const it=o.item,rank=o.rank;
     const H=slotH[key(o)]||(slotH[key(o)]={});
-    if(rank>=5){H.u=(H.u||0)+1;return}
+    if(rank>=5){H.u=(H.u||0)+1;const sa=slotAlt[key(o)]||(slotAlt[key(o)]={});[...o.sc.keys()].sort((a,b)=>o.sc[b]-o.sc[a]).slice(0,3).forEach(a=>{sa[a]=(sa[a]||0)+0.5});return}
     H[it]=(H[it]||0)+1;
-    const cnt=SC.readCount(hi,o.c,s,DIGITS),top=[...o.sc.keys()].sort((a,b)=>o.sc[b]-o.sc[a]).slice(0,4);
-    const ob=scanObs[it]||(scanObs[it]={k:it,counts:{},sure:{},alts:{},first:scanFrames});
-    if(cnt.v){ob.counts[cnt.v]=(ob.counts[cnt.v]||0)+1;if(cnt.sure)ob.sure[cnt.v]=(ob.sure[cnt.v]||0)+1}
-    top.forEach(a=>{if(a!==it)ob.alts[a]=(ob.alts[a]||0)+1})});
-  scanLast=cl.map(o=>{if(o.std<22)return {c:o.c,st:'empty'};const L=leader(slotH[key(o)]||{});
-    if(L.k!==null&&L.v>=ACC_MIN&&L.v>=ACC_SHARE*L.t){if(isFood(L.k)){if(!ACC.has(L.k)&&scanObs[L.k])scanObs[L.k].first=scanFrames;ACC.add(L.k);MAYBE.delete(L.k)}return {c:o.c,st:'ok'}}
-    if(L.k!==null&&L.v>=MAY_MIN&&L.v>=MAY_SHARE*L.t&&!ACC.has(L.k)&&isFood(L.k))MAYBE.add(L.k);
-    return {c:o.c,st:'wait'}});
-  drawOverlay(map);drawScanList();
-  setMsg(scanLast.some(o=>o.st==='wait')?'Okunuyor, sabit tut…':'Bu sayfa tamam, sonraki sayfaya geç.');
+    const cnt=SC.readCount(hi,o.c,s,DIGITS),top=[...o.sc.keys()].sort((a,b)=>o.sc[b]-o.sc[a]).slice(0,5);
+    const sc_=slotCnt[key(o)]||(slotCnt[key(o)]={counts:{},sure:{}});
+    if(cnt.v){sc_.counts[cnt.v]=(sc_.counts[cnt.v]||0)+1;if(cnt.sure)sc_.sure[cnt.v]=(sc_.sure[cnt.v]||0)+1}
+    const sa=slotAlt[key(o)]||(slotAlt[key(o)]={});top.forEach(a=>{sa[a]=(sa[a]||0)+1})});
+  /* page readiness: every slot settled (empty or a clear winner), or enough frames that the rest is marked unsure */
+  const st={};let open=0;
+  for(const q in A){const H=slotH[q]||{},L=leader(H);
+    if((H.e||0)>=Math.max(2,0.6*L.t)){st[q]='empty';continue}
+    if(L.k!==null&&L.v>=ACC_MIN&&L.v>=ACC_SHARE*L.t)st[q]='ok';else{st[q]='wait';open++}}
+  scanLast=cl.map(o=>({c:o.c,st:st[key(o)]==='empty'?'empty':st[key(o)]}));
+  drawOverlay(map);
+  if(QS.get('dbg'))console.log('DBG '+tfi+' ep '+epochN+' open '+open+' slots '+Object.keys(A).length+' done '+PDONE);
+  if(PDONE){setMsg('Bu sayfa eklendi. Oyunda sonraki sayfaya geç.');return}
+  if(!((epochN>=3&&!open)||(epochN>=4&&open<=2)||epochN>=7)){setMsg('Sayfa okunuyor, sabit tut…');return}
+  const slots=Object.keys(A).map(q=>{const [i,j]=q.split(',').map(Number),H=slotH[q]||{},L=leader(H);
+    if(st[q]==='empty')return {q,i,j,k:null};
+    const ranked=Object.entries(slotAlt[q]||{}).sort((x,y)=>y[1]-x[1]).map(x=>+x[0]),k=L.k!==null?L.k:ranked[0];
+    if(k===undefined)return {q,i,j,k:null};
+    const sc_=slotCnt[q]||{counts:{},sure:{}},c=obCount(sc_),alts=ranked.filter(z=>z!==k).slice(0,4);
+    return {q,i,j,k,c,unsure:L.k===null||st[q]!=='ok',alts}}).sort((x,y)=>x.j-y.j||x.i-y.i);
+  /* an unsure cell between two sure ones must hold an item that comes between them in the game's order */
+  slots.forEach((z,n)=>{if(z.k===null||!z.unsure)return;let kp=-1,kn=SCAN_NAMES.length;
+    for(let m=n-1;m>=0;m--)if(slots[m].k!==null&&!slots[m].unsure){kp=slots[m].k;break}
+    for(let m=n+1;m<slots.length;m++)if(slots[m].k!==null&&!slots[m].unsure){kn=slots[m].k;break}
+    if(kp<0||kn>=SCAN_NAMES.length||kn-kp-1<1||kn-kp-1>6)return;
+    const sa=slotAlt[z.q]||{},cand=[];for(let k=kp+1;k<kn;k++)cand.push(k);cand.sort((x,y)=>(sa[y]||0)-(sa[x]||0));
+    const old=z.k;z.k=cand[0];z.alts=[...cand.slice(1),...(old!==z.k?[old]:[]),...z.alts].filter((v,i,A)=>v!==z.k&&A.indexOf(v)===i).slice(0,4);if(cand.length===1)z.unsure=false});
+  const sig=slots.filter(z=>z.k!==null).map(z=>z.k);
+  PDONE=true;
+  if(lastSig&&sig.length){const same=sig.filter(k=>lastSig.includes(k)).length;if(same>=0.7*sig.length){setMsg('Bu sayfa zaten eklendi. Oyunda sonraki sayfaya geç.');return}}
+  if(!sig.length){setMsg('Bu sayfa boş görünüyor.');return}
+  PAGE={slots,sig};PSEL=-1;showPage();
 }
+function showPage(){
+  const P=PAGE;if(!P){$('ppanel').hidden=true;return}
+  const un=P.slots.filter(z=>z.k!==null&&(z.unsure||!z.c)).length;
+  $('ppanel').hidden=false;$('tcard').hidden=true;
+  const cols=Math.max(...P.slots.map(z=>z.i))+1;$('pgrid').style.gridTemplateColumns='repeat('+cols+',minmax(0,1fr))';
+  $('pgrid').innerHTML=P.slots.map((z,n)=>z.k===null?'<button class="pc pe" data-n="'+n+'" aria-label="Boş kutu"></button>':
+    '<button class="pc'+(z.unsure?' un':'')+(isFood(z.k)?'':' nf')+(PSEL===n?' sel':'')+'" data-n="'+n+'" title="'+esc(SCAN_NAMES[z.k])+'">'+icp(z.k,44)+'<b'+(z.c?'':' class="q"')+'>'+(z.c?(z.c>=5?'5+':z.c):'?')+'</b></button>').join('');
+  const z=P.slots[PSEL];
+  if(z&&z.k!==null){$('pedit').hidden=false;
+    $('pedit').innerHTML='<b>'+esc(SCAN_NAMES[z.k])+'</b><div class="cn">'+[1,2,3,4,5].map(v=>'<button data-c="'+v+'" aria-pressed="'+(z.c===v)+'">'+(v===5?'5+':v)+'</button>').join('')+'<button data-e="1">Boş</button></div>'+
+      (z.alts.length?'<div class="alts"><span>Bu değilse:</span>'+z.alts.map(a=>'<button data-a="'+a+'" title="'+esc(SCAN_NAMES[a])+'" aria-label="'+esc(SCAN_NAMES[a])+'">'+icp(a,34)+'</button>').join('')+'</div>':'')}
+  else if(z){$('pedit').hidden=false;$('pedit').innerHTML='<b>Boş kutu</b>'+(lastAltsFor(z).length?'':'')}
+  else $('pedit').hidden=true;
+  setMsg('Sayfa okundu. TV ile karşılaştır'+(un?', sarı ve ? olanlara bak.':'.')+' Yanlış kutuya dokunup düzelt.');
+  clearTimeout(pgTimer);
+  if(TEK.auto&&!un&&PSEL<0&&!QS.get('hold')){beep();pgTimer=setTimeout(confirmPage,1400)}else if(TEK.auto){beep();setTimeout(beep,180)}
+}
+const lastAltsFor=z=>[];
+function confirmPage(){
+  clearTimeout(pgTimer);const P=PAGE;if(!P)return;
+  P.slots.forEach(z=>{if(z.k===null||!isFood(z.k))return;const o=scanObs[z.k]||(scanObs[z.k]={k:z.k,counts:{},sure:{},alts:{},first:0});
+    o.first=Date.now()+z.j*10+z.i;o.sure=z.c?{[z.c]:9}:{};o.counts={};o.alts={};z.alts.forEach(a=>{o.alts[a]=1});ACC.add(z.k);MAYBE.delete(z.k)});
+  lastSig=P.sig;nPages++;PAGE=null;PSEL=-1;$('ppanel').hidden=true;drawScanList();
+  if(TESTF)console.log('PAGE '+nPages+' :: '+P.slots.map(z=>z.k===null?'_':(z.unsure?'?':'')+SCAN_NAMES[z.k]+' '+(z.c||'?')).join(', '));
+  setMsg(nPages+'. sayfa eklendi. Oyunda sonraki sayfaya geç.');
+}
+$('pgrid').addEventListener('click',ev=>{const b=ev.target.closest('.pc');if(!b||!PAGE)return;clearTimeout(pgTimer);const n=+b.dataset.n;PSEL=PSEL===n?-1:n;showPage()});
+$('pedit').addEventListener('click',ev=>{const b=ev.target.closest('button');if(!b||!PAGE)return;const z=PAGE.slots[PSEL];if(!z)return;
+  if(b.dataset.c){z.c=+b.dataset.c;z.unsure=false}
+  if(b.dataset.e){z.k=null}
+  if(b.dataset.a){const old=z.k;z.k=+b.dataset.a;z.alts=z.alts.map(a=>a===z.k?old:a);z.unsure=false}
+  showPage()});
+$('pok').addEventListener('click',confirmPage);
+$('pre').addEventListener('click',()=>{clearTimeout(pgTimer);PAGE=null;PSEL=-1;$('ppanel').hidden=true;slotH={};slotCnt={};slotAlt={};epochN=0;PDONE=false;prevA=null;setMsg('Tekrar okunuyor, sabit tut…')});
 function drawOverlay(map){
   const cv=$('ov'),r=cv.getBoundingClientRect(),dpr=window.devicePixelRatio||1;
   if(cv.width!==Math.round(r.width*dpr)||cv.height!==Math.round(r.height*dpr)){cv.width=Math.round(r.width*dpr);cv.height=Math.round(r.height*dpr)}
@@ -1160,11 +1241,12 @@ function drawOverlay(map){
 const obCount=o=>{if(!o)return 0;if((o.sure[5]||0)>=2)return 5;const pick=m=>{let b=0,bv=0;for(const [v,n] of Object.entries(m))if(n>bv){bv=n;b=+v}return b};return pick(o.sure)||pick(o.counts)};
 function drawScanList(){
   const A=[...ACC].map(k=>scanObs[k]).filter(Boolean).sort((a,b)=>b.first-a.first);
-  $('scancount').textContent=A.length?A.length+' malzeme eklendi'+(MAYBE.size?', '+MAYBE.size+' tanesinden emin değilim':''):'Henüz malzeme yok';
+  $('scancount').textContent=A.length?A.length+' malzeme eklendi'+(nPages?' ('+nPages+' sayfa)':'')+(MAYBE.size?', '+MAYBE.size+' tanesinden emin değilim':''):'Henüz malzeme yok';
   $('scanlist').innerHTML=A.map(o=>{const c=obCount(o);return '<span class="sitem'+(c?'':' un')+'" title="'+esc(SCAN_NAMES[o.k])+'">'+icp(o.k,40)+'<b>'+(c?(c>=5?'5+':c):'?')+'</b></span>'}).join('');
   $('scandone').disabled=!A.length&&!MAYBE.size;
 }
 function openReview(){
+  if(PAGE)confirmPage();
   stopCam();
   const row=(k,on)=>{const o=scanObs[k],c=obCount(o),alts=o?Object.entries(o.alts).sort((a,b)=>b[1]-a[1]).map(a=>+a[0]).filter(isFood).slice(0,3):[];return {k,c:c||1,nocount:!c,on,alts}};
   REV=[...ACC].map(k=>row(k,true)).sort((a,b)=>(b.nocount-a.nocount)||(a.k-b.k)).concat([...MAYBE].filter(k=>!ACC.has(k)).map(k=>row(k,false)).sort((a,b)=>a.k-b.k));
@@ -1191,8 +1273,8 @@ function applyScan(replace){
   REV.forEach(r=>{if(!r.on)return;const x=BY[SCAN_NAMES[r.k]];if(x)inv[x.i]=Math.min(5,r.c)});
   invEx=false;saveInv();drawEnvHead();drawEnvGrid();plan();closeScan();tab('env');
 }
-$('scanbtn').addEventListener('click',()=>openScan(false,'tek'));
-$('scanbtn2').addEventListener('click',()=>openScan(false,'grid'));
+$('scanbtn').addEventListener('click',()=>openScan(false,'grid'));
+$('scanbtn2').addEventListener('click',()=>openScan(false,'tek'));
 $('scanx').addEventListener('click',closeScan);
 $('scandone').addEventListener('click',openReview);
 $('revback').addEventListener('click',()=>openScan(true));

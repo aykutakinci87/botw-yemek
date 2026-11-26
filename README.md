@@ -1,6 +1,6 @@
 # BotW Yemek Hesaplayıcı
 
-Zelda: Breath of the Wild için pişirme hesaplayıcı. Tencereye 5 malzemeye kadar koy, yemeğin adını, kaç kalp verdiğini, etkisini ve süresini gör. Elimdekiler sekmesinde "Kamerayla tek tek tara"ya bas, telefonu (dik ya da yatay) televizyona çevir ve oyundaki malzeme adını turuncu şeride getir. İmleci malzemelerin üstünde gezdirdikçe uygulama adları okuyup ekler; eller serbest modda bip sesiyle 5+ olarak ekler, sonra kontrol ekranında azları düzeltirsin. Sonra elindekilerle yapabileceğin en iyi yemekleri bulur.
+Zelda: Breath of the Wild için pişirme hesaplayıcı. Tencereye 5 malzemeye kadar koy, yemeğin adını, kaç kalp verdiğini, etkisini ve süresini gör. Elimdekiler sekmesinde "Kamerayla tara"ya bas, telefonu dik tutup oyundaki malzeme ızgarasını kesikli çerçeveye sığdır. Sayfa okununca telefonda 5×4 kopyası çıkar: TV ile karşılaştırıp "Doğru, ekle" dersin, yanlış kutu varsa dokunup düzeltirsin. Sonraki sayfaya geçip tekrarlarsın. Sonra elindekilerle yapabileceğin en iyi yemekleri bulur.
 
 iPhone'da Safari ile aç, Paylaş > Ana Ekrana Ekle. Uygulama internetsiz de çalışır.
 
